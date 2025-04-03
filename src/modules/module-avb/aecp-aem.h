@@ -346,4 +346,8 @@ int avb_aecp_aem_handle_response(struct aecp *aecp, const void *m, int len);
 int avb_aecp_vendor_unique_command(struct aecp *aecp, const void *m, int len);
 int avb_aecp_vendor_unique_response(struct aecp *aecp, const void *m, int len);
 
+static int reply_status(struct aecp *aecp, int status, const void *m, int len);
+static int reply_not_supported(struct aecp *aecp, const void *m, int len);
+
+
 #endif /* AVB_AEM_H */
