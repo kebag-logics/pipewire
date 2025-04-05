@@ -1,11 +1,13 @@
-#include "aecp-aem-acquire-entity.h"
 #include "aecp-aem.h"
+#include "aecp-aem-descriptors.h"
+
+#include "aecp-aem-acquire-entity.h"
 
 /* ACQUIRE_ENTITY */
-static int handle_acquire_entity(struct aecp *aecp, const void *m, int len)
+int handle_acquire_entity(struct aecp *aecp, const void *m, int len)
 {
-	const struct avb_packet_aecp_aem *p = m;
 #ifndef USE_MILAN
+	const struct avb_packet_aecp_aem *p = m;
 	const struct avb_packet_aecp_aem_acquire *ae;
 	struct server *server = aecp->server;
 

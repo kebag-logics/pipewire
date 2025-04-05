@@ -1,6 +1,7 @@
-#include "aecp-aem-lock-entity.h"
 #include "aecp-aem.h"
 #include "aecp-aem-descriptors.h"
+
+#include "aecp-aem-lock-entity.h"
 
 static int reply_lock_entity(struct aecp *aecp, const void *m, int len, uint64_t locked_guid)
 {
@@ -21,7 +22,7 @@ static int reply_lock_entity(struct aecp *aecp, const void *m, int len, uint64_t
 }
 
 /* LOCK_ENTITY */
-static int handle_lock_entity(struct aecp *aecp, const void *m, int len)
+int handle_lock_entity(struct aecp *aecp, const void *m, int len)
 {
 	#ifndef USE_MILAN
 	struct server *server = aecp->server;
@@ -46,7 +47,6 @@ static int handle_lock_entity(struct aecp *aecp, const void *m, int len)
 	#else // USE_MILAN
 	struct server *server = aecp->server;
 	const struct avb_packet_aecp_aem *p = m;
-	const struct avb_packet_aecp_aem_acquire *ae;
 	const struct descriptor *desc;
 	uint16_t desc_type, desc_id;
 	uint32_t flags;
@@ -67,24 +67,24 @@ static int handle_lock_entity(struct aecp *aecp, const void *m, int len)
 
 	// Milan v1.2: Sec. 5.4.2.2 LOCK_ENTITY
 	if (desc_type != AVB_AEM_DESC_ENTITY || desc_id != 0)
-		return reply_not_supported(aecp, m, len);	
+		return reply_not_supported(aecp, m, len);
 
 	// If no one as locked it, assign the current controller
 	if (locked_id == 0)
 	{
 		locked_id = controller_id;
-		// The locked_id field is set to zero (0) for a command, 
-		// and is set to the Entity ID of the AVDECC Controller 
+		// The locked_id field is set to zero (0) for a command,
+		// and is set to the Entity ID of the AVDECC Controller
 		// that is holding the lock in a response.
 		return reply_lock_entity(aecp, m, len, locked_id);
 	}
 	// Entity locked but locking controller wants to UNLOCK
-	else if (locked_id == controller_id) && (flags == 1) 
+	else if ((locked_id == controller_id) && (flags == 1))
 	{
 		locked_id = 0;
 		return reply_lock_entity(aecp, m, len, locked_id);
 	}
-	
+
 	// The locked_id field is set to zero (0) for a command, and is set to the Entity ID
 	// of the AVDECC Controller that is holding the lock in a response.
 	// Controller locked
