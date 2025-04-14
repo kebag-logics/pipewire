@@ -33,9 +33,27 @@ static inline int reply_not_supported(struct aecp *aecp, const void *m, int len)
 	return reply_status(aecp, AVB_AECP_AEM_STATUS_NOT_SUPPORTED, m, len);
 }
 
-static inline int reply_locked(struct aecp *aecp, const void *m, int len)
+static inline int reply_locked(struct aecp *aecp, const void *m, int len, uint64_t locked_id)
 {
-	return reply_status(aecp, AVB_AECP_AEM_STATUS_ENTITY_LOCKED, m, len);
+	uint8_t buf[len];
+	struct avb_ethernet_header *h = (void*)buf;
+	struct avb_packet_aecp_header *reply = SPA_PTROFF(h, sizeof(*h), void);
+	struct avb_packet_aecp_aem *p_reply = (void*)reply;
+	struct avb_packet_aecp_aem_lock *ae_reply;
+
+	memcpy(buf, m, len);
+
+	AVB_PACKET_AECP_SET_MESSAGE_TYPE(reply, AVB_AECP_MESSAGE_TYPE_AEM_RESPONSE);
+	AVB_PACKET_AECP_SET_STATUS(reply, AVB_AECP_AEM_STATUS_ENTITY_LOCKED);
+
+	ae_reply = (struct avb_packet_aecp_aem_lock*)p_reply->payload;
+	/* IEEE 1722.1-2021, Sec. 7.4.2.1:
+	* The locked_id field is set to zero (0) for a command, and is set to the
+	* Entity ID of the ATDECC Controller that is holding the lock in a response.
+	*/
+	ae_reply->locked_guid = htobe64(locked_id);
+
+	return avb_server_send_packet(aecp->server, h->src, AVB_TSN_ETH, buf, len);
 }
 
 static inline int reply_no_resources(struct aecp *aecp, const void *m, int len)
