@@ -28,7 +28,6 @@ int handle_cmd_lock_entity(struct aecp *aecp, int64_t now, const void *m, int le
 	const struct descriptor *desc;
 	struct aecp_aem_lock_state lock = {0};
 	uint16_t desc_type, desc_id;
-	struct timespec ts_now;
 
 	int rc;
 	bool changed = false;
@@ -81,7 +80,7 @@ int handle_cmd_lock_entity(struct aecp *aecp, int64_t now, const void *m, int le
 			/* Unlocking by a controller that did not lock?*/
 			if (htobe64(p->aecp.controller_guid) != lock.locked_id) {
 				pw_log_debug("but the device is locked by %lx\n", htobe64(lock.locked_id));
-				return reply_locked(aecp, m, len, lock.locked_id);
+				return reply_locked(aecp, m, len);
 			// TODO: Can this statement be reached?
 			} else {
 				pw_log_error("Invalid state\n");
@@ -90,11 +89,6 @@ int handle_cmd_lock_entity(struct aecp *aecp, int64_t now, const void *m, int le
 		}
 	/* Controller wants to lock */
 	} else {
-		if (clock_gettime(CLOCK_MONOTONIC, &ts_now)) {
-			pw_log_error("while getting CLOCK_MONOTONIC time");
-			spa_assert(0);
-		}
-
 		// Is it really locked?
 		if (!lock.is_locked ||
 			lock.base_info.expire_timeout < now) {
@@ -114,13 +108,13 @@ int handle_cmd_lock_entity(struct aecp *aecp, int64_t now, const void *m, int le
 			} else {
 				// Cannot lock because already locked
 				pw_log_debug("but the device is locked by %lx\n", htobe64(lock.locked_id));
-				return reply_locked(aecp, m, len, lock.locked_id);
+				return reply_locked(aecp, m, len);
 			}
 		}
 	}
 
 	lock.base_info.controller_entity_id = htobe64(p->aecp.controller_guid);
-	/* Forget the response for the entity that is locking the device */
+	/* Forge the response for the entity that is locking the device */
 	memcpy(buf, m, len);
 	h_reply = (struct avb_ethernet_header *) buf;
 	p_reply = SPA_PTROFF(h_reply, sizeof(*h_reply), void);
