@@ -191,7 +191,7 @@ int handle_unsol_lock_entity(struct aecp *aecp, int64_t now)
 	rc = reply_unsolicited_notifications(aecp, &lock.base_info, buf, len,
 		 has_expired);
 	if (rc) {
-		pw_log_error("Unsollicited notification failed \n");
+		pw_log_error("Unsolicited notification failed \n");
 	}
 #endif;
 	return rc;
