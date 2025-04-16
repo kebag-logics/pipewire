@@ -21,6 +21,7 @@
 #include "aecp-cmd-resp/aecp-aem-get-avb-info.h"
 #include "aecp-cmd-resp/aecp-aem-lock-entity.h"
 #include "aecp-cmd-resp/aecp-aem-cmd-set-name.h"
+#include "aecp-cmd-resp/aecp-aem-cmd-set-control.h"
 #include "aecp-cmd-resp/aecp-aem-unsol-notifications.h"
 
 /* ACQUIRE_ENTITY */
