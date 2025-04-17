@@ -115,6 +115,11 @@ struct aecp_aem_name_state {
     uint16_t name_index;
 };
 
+/**
+ * To keep track of which desciptor has changed  */
+struct aecp_aem_sampling_rate_state {
+    struct aecp_aem_desc_base base_desc;
+};
 
 /**
  * The aecp_aem_desc_base inherites from the base
@@ -125,6 +130,7 @@ enum aecp_aem_lock_types {
 	  aecp_aem_lock,
     aecp_aem_name,
     aecp_aem_configuration,
+    aecp_aem_sampling_rate,
     aecp_aem_unsol_notif,
 
     // aecp_aem_desc, This is only used to retrieve the value, dynamic change
