@@ -5,6 +5,7 @@
 #ifndef AVB_AAF_H
 #define AVB_AAF_H
 
+/* IEEE 1722-2016, Sec. 7.2 */
 struct avb_packet_aaf {
 	uint8_t subtype;
 #if __BYTE_ORDER == __BIG_ENDIAN
@@ -34,6 +35,7 @@ struct avb_packet_aaf {
 #endif
 	uint64_t stream_id;
 	uint32_t timestamp;
+/* IEEE 1722-2016, Table 9 - AAF field values */
 #define AVB_AAF_FORMAT_USER		0x00
 #define AVB_AAF_FORMAT_FLOAT_32BIT	0x01
 #define AVB_AAF_FORMAT_INT_32BIT	0x02
@@ -41,7 +43,7 @@ struct avb_packet_aaf {
 #define AVB_AAF_FORMAT_INT_16BIT	0x04
 #define AVB_AAF_FORMAT_AES3_32BIT	0x05
 	uint8_t format;
-
+/* IEEE 1722-2016, Table 11 - nsr field values */
 #define AVB_AAF_PCM_NSR_USER		0x00
 #define AVB_AAF_PCM_NSR_8KHZ		0x01
 #define AVB_AAF_PCM_NSR_16KHZ		0x02
@@ -63,7 +65,7 @@ struct avb_packet_aaf {
 	uint8_t chan_per_frame;
 	uint8_t bit_depth;
 	uint16_t data_len;
-
+/* IEEE1722-2016, Table 10 - sp field description */
 #define AVB_AAF_PCM_SP_NORMAL		0x00
 #define AVB_AAF_PCM_SP_SPARSE		0x01
 #if __BYTE_ORDER == __BIG_ENDIAN
