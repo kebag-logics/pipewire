@@ -894,28 +894,40 @@ static inline void init_descriptors(struct server *server)
     server_add_descriptor(server, AVB_AEM_DESC_CLOCK_SOURCE, 2,
             sizeof(clock_source_crf), &clock_source_crf);
 
+    /**************************************************************************************/
+    /* IEEE 1722.1-2021, Sec. 7.2.32 CLOCK_DOMAIN Descriptor */
+    /* Milan v1.2, Sec. 5.3.3.11 */
 
-	struct {
-		struct avb_aem_desc_clock_domain desc;
-		uint16_t clock_sources[3];
-	} __attribute__ ((__packed__)) clock_domain = {
-		.desc = {
-			.object_name = "Clock Reference Format",
-			.localized_description = htons(0xffff),
-			.clock_source_index = htons(0),
-			.descriptor_counts_offset = htons(
-			4 + sizeof(struct avb_aem_desc_clock_domain)),
-			.clock_sources_count = htons(3),
-		},
-		.clock_sources = {
-		    htons(0),
-		    htons(1),
-		    htons(2)
-		},
-	};
+    #define DSC_CLOCK_DOMAIN_OBJECT_NAME "Clock Reference Format"
+    #define DSC_CLOCK_DOMAIN_LOCALIZED_DESCRIPTION AVB_AEM_DESC_INVALID
+    #define DSC_CLOCK_DOMAIN_CLOCK_SOURCE_INDEX 0
+    #define DSC_CLOCK_DOMAIN_DESCRIPTOR_COUNTS_OFFSET (4 + sizeof(struct avb_aem_desc_clock_domain))
+    #define DSC_CLOCK_DOMAIN_CLOCK_SOURCES_COUNT 3
 
-	server_add_descriptor(server, AVB_AEM_DESC_CLOCK_DOMAIN, 0,
-			sizeof(clock_domain), &clock_domain);
+    #define DSC_CLOCK_DOMAIN_SOURCES_0 0  // Internal
+    #define DSC_CLOCK_DOMAIN_SOURCES_1 1  // AAF
+    #define DSC_CLOCK_DOMAIN_SOURCES_2 2  // CRF
+
+    struct {
+        struct avb_aem_desc_clock_domain desc;
+        uint16_t clock_sources_idx[DSC_CLOCK_DOMAIN_CLOCK_SOURCES_COUNT];
+    } __attribute__ ((__packed__)) clock_domain = {
+        .desc = {
+            .object_name = DSC_CLOCK_DOMAIN_OBJECT_NAME,
+            .localized_description = htons(DSC_CLOCK_DOMAIN_LOCALIZED_DESCRIPTION),
+            .clock_source_index = htons(DSC_CLOCK_DOMAIN_CLOCK_SOURCE_INDEX),
+            .descriptor_counts_offset = htons(DSC_CLOCK_DOMAIN_DESCRIPTOR_COUNTS_OFFSET),
+            .clock_sources_count = htons(DSC_CLOCK_DOMAIN_CLOCK_SOURCES_COUNT),
+        },
+        .clock_sources_idx = {
+            htons(DSC_CLOCK_DOMAIN_SOURCES_0),
+            htons(DSC_CLOCK_DOMAIN_SOURCES_1),
+            htons(DSC_CLOCK_DOMAIN_SOURCES_2),
+        },
+    };
+
+    server_add_descriptor(server, AVB_AEM_DESC_CLOCK_DOMAIN, 0,
+            sizeof(clock_domain), &clock_domain);
 }
 
 #endif
