@@ -435,59 +435,141 @@ static inline void init_descriptors(struct server *server)
 		.number_of_maps = htons(1),
 		.base_map = htons(1),
 	};
-
 	server_add_descriptor(server, AVB_AEM_DESC_STREAM_PORT_OUTPUT, 0,
 			sizeof(stream_port_output0), &stream_port_output0);
+	
+	/**************************************************************************************/
+	/* IEEE 1722.1-2021, Sec. 7.2.3 AUDIO_UNIT Descriptor */
+	/* Milan v1.2, Sec. 5.3.3.3*/
+
+    /* IEEE 1722.1-2021, Sec. 7.3.1 
+	 * A sampling rate consists of a 3 bit pull field 
+	 * representing a multiplier and a 29 bit 
+	 * base_frequency in hertz, as detailed in Figure 7-2.
+	 * The pull field specifies the multiplier modifier 
+	 * of the base_frequency field which is required to 
+	 * calculate the appropriate nominal sampling rate. 
+	 * The pull field may have one of the values defined 
+	 * in Table 7-70: 
+	 * The base_frequency field defines the nominal base
+	 * sampling rate in Hz, from 1 Hz to 536 870 911 Hz.
+	 * The value of this field is augmented by the 
+	 * pull field value.*/
+    #define BUILD_SAMPLING_RATE(pull, base_freq_hz) \
+    (((uint32_t)(pull) << 29) | ((uint32_t)(base_freq_hz) & 0x1FFFFFFF))
+
+
+	#define DSC_AUDIO_UNIT_OBJECT_NAME                          ""
+	#define DSC_AUDIO_UNIT_LOCALIZED_DESCRIPTION                0xFFFF
+	#define DSC_AUDIO_UNIT_CLOCK_DOMAIN_INDEX                   0x0000
+
+	#define DSC_AUDIO_UNIT_NUMBER_OF_STREAM_INPUT_PORTS         0x0001
+	#define DSC_AUDIO_UNIT_BASE_STREAM_INPUT_PORT               0x0000
+
+	#define DSC_AUDIO_UNIT_NUMBER_OF_STREAM_OUTPUT_PORTS        0x0001
+	#define DSC_AUDIO_UNIT_BASE_STREAM_OUTPUT_PORT              0x0000
+
+	#define DSC_AUDIO_UNIT_NUMBER_OF_EXTERNAL_INPUT_PORTS       0x0008
+	#define DSC_AUDIO_UNIT_BASE_EXTERNAL_INPUT_PORT             0x0000
+
+	#define DSC_AUDIO_UNIT_NUMBER_OF_EXTERNAL_OUTPUT_PORTS      0x0008
+	#define DSC_AUDIO_UNIT_BASE_EXTERNAL_OUTPUT_PORT            0x0000
+
+	#define DSC_AUDIO_UNIT_NUMBER_OF_INTERNAL_INPUT_PORTS       0x0000
+	#define DSC_AUDIO_UNIT_BASE_INTERNAL_INPUT_PORT             0x0000
+
+	#define DSC_AUDIO_UNIT_NUMBER_OF_INTERNAL_OUTPUT_PORTS      0x0000
+	#define DSC_AUDIO_UNIT_BASE_INTERNAL_OUTPUT_PORT            0x0000
+
+	#define DSC_AUDIO_UNIT_NUMBER_OF_CONTROLS                   0x0000
+	#define DSC_AUDIO_UNIT_BASE_CONTROL                         0x0000
+
+	#define DSC_AUDIO_UNIT_NUMBER_OF_SIGNAL_SELECTORS           0x0000
+	#define DSC_AUDIO_UNIT_BASE_SIGNAL_SELECTOR                 0x0000
+
+	#define DSC_AUDIO_UNIT_NUMBER_OF_MIXERS                     0x0000
+	#define DSC_AUDIO_UNIT_BASE_MIXER                           0x0000
+
+	#define DSC_AUDIO_UNIT_NUMBER_OF_MATRICES                   0x0000
+	#define DSC_AUDIO_UNIT_BASE_MATRIX                          0x0000
+
+	#define DSC_AUDIO_UNIT_NUMBER_OF_SPLITTERS                  0x0000
+	#define DSC_AUDIO_UNIT_BASE_SPLITTER                        0x0000
+
+	#define DSC_AUDIO_UNIT_NUMBER_OF_COMBINERS                  0x0000
+	#define DSC_AUDIO_UNIT_BASE_COMBINER                        0x0000
+
+	#define DSC_AUDIO_UNIT_NUMBER_OF_DEMULTIPLEXERS             0x0000
+	#define DSC_AUDIO_UNIT_BASE_DEMULTIPLEXER                   0x0000
+
+	#define DSC_AUDIO_UNIT_NUMBER_OF_MULTIPLEXERS               0x0000
+	#define DSC_AUDIO_UNIT_BASE_MULTIPLEXER                     0x0000
+
+	#define DSC_AUDIO_UNIT_NUMBER_OF_TRANSCODERS                0x0000
+	#define DSC_AUDIO_UNIT_BASE_TRANSCODER                      0x0000
+
+	#define DSC_AUDIO_UNIT_NUMBER_OF_CONTROL_BLOCKS             0x0000
+	#define DSC_AUDIO_UNIT_BASE_CONTROL_BLOCK                   0x0000
+	
+	#define DSC_AUDIO_UNIT_SAMPLING_RATE_PULL					0
+	#define DSC_AUDIO_UNIT_SAMPLING_RATE_BASE_FREQ_IN_HZ		48000
+    #define DSC_AUDIO_UNIT_CURRENT_SAMPLING_RATE_IN_HZ          \
+    BUILD_SAMPLING_RATE(DSC_AUDIO_UNIT_SAMPLING_RATE_PULL, DSC_AUDIO_UNIT_SAMPLING_RATE_BASE_FREQ_IN_HZ)
+    /*The offset to the sample_rates field from the start of the descriptor.
+     * This field is 144 for this version of AEM.*/
+    #define DSC_AUDIO_UNIT_SAMPLING_RATES_OFFSET                144
+	#define DSC_AUDIO_UNIT_SUPPORTED_SAMPLING_RATE_COUNT        0x0001
+    #define DSC_AUDIO_UNIT_SUPPORTED_SAMPLING_RATE_IN_HZ_0      \
+    BUILD_SAMPLING_RATE(DSC_AUDIO_UNIT_SAMPLING_RATE_PULL, DSC_AUDIO_UNIT_SAMPLING_RATE_BASE_FREQ_IN_HZ)
+
 	struct {
 		struct avb_aem_desc_audio_unit desc;
-		struct avb_aem_desc_sampling_rate sampling_rates[2];
+		struct avb_aem_desc_sampling_rate sampling_rates[DSC_AUDIO_UNIT_SUPPORTED_SAMPLING_RATE_COUNT];
 	} __attribute__ ((__packed__)) audio_unit =
 	{
 		{
-		.object_name = "",
-		.localized_description = htons(0xffff),
-		.clock_domain_index = htons(0),
-		.number_of_stream_input_ports = htons(1),
-		.base_stream_input_port = htons(0),
-		.number_of_stream_output_ports = htons(1),
-		.base_stream_output_port = htons(0),
-		.number_of_external_input_ports = htons(8),
-		.base_external_input_port = htons(0),
-		.number_of_external_output_ports = htons(8),
-		.base_external_output_port = htons(0),
-		.number_of_internal_input_ports = htons(0),
-		.base_internal_input_port = htons(0),
-		.number_of_internal_output_ports = htons(0),
-		.base_internal_output_port = htons(0),
-		.number_of_controls = htons(0),
-		.base_control = htons(0),
-		.number_of_signal_selectors = htons(0),
-		.base_signal_selector = htons(0),
-		.number_of_mixers = htons(0),
-		.base_mixer = htons(0),
-		.number_of_matrices = htons(0),
-		.base_matrix = htons(0),
-		.number_of_splitters = htons(0),
-		.base_splitter = htons(0),
-		.number_of_combiners = htons(0),
-		.base_combiner = htons(0),
-		.number_of_demultiplexers = htons(0),
-		.base_demultiplexer = htons(0),
-		.number_of_multiplexers = htons(0),
-		.base_multiplexer = htons(0),
-		.number_of_transcoders = htons(0),
-		.base_transcoder = htons(0),
-		.number_of_control_blocks = htons(0),
-		.base_control_block = htons(0),
-		.current_sampling_rate = htonl(48000),
-		.sampling_rates_offset = htons(
-			4 + sizeof(struct avb_aem_desc_audio_unit)),
-		.sampling_rates_count = htons(2),
+		.object_name = DSC_AUDIO_UNIT_OBJECT_NAME,
+		.localized_description = htons(DSC_AUDIO_UNIT_LOCALIZED_DESCRIPTION),
+		.clock_domain_index = htons(DSC_AUDIO_UNIT_CLOCK_DOMAIN_INDEX),
+		.number_of_stream_input_ports = htons(DSC_AUDIO_UNIT_NUMBER_OF_STREAM_INPUT_PORTS),
+		.base_stream_input_port = htons(DSC_AUDIO_UNIT_BASE_STREAM_INPUT_PORT),
+		.number_of_stream_output_ports = htons(DSC_AUDIO_UNIT_NUMBER_OF_STREAM_OUTPUT_PORTS),
+		.base_stream_output_port = htons(DSC_AUDIO_UNIT_BASE_STREAM_OUTPUT_PORT),
+		.number_of_external_input_ports = htons(DSC_AUDIO_UNIT_NUMBER_OF_EXTERNAL_INPUT_PORTS),
+		.base_external_input_port = htons(DSC_AUDIO_UNIT_BASE_EXTERNAL_INPUT_PORT),
+		.number_of_external_output_ports = htons(DSC_AUDIO_UNIT_NUMBER_OF_EXTERNAL_OUTPUT_PORTS),
+		.base_external_output_port = htons(DSC_AUDIO_UNIT_BASE_EXTERNAL_OUTPUT_PORT),
+		.number_of_internal_input_ports = htons(DSC_AUDIO_UNIT_NUMBER_OF_INTERNAL_INPUT_PORTS),
+		.base_internal_input_port = htons(DSC_AUDIO_UNIT_BASE_INTERNAL_INPUT_PORT),
+		.number_of_internal_output_ports = htons(DSC_AUDIO_UNIT_NUMBER_OF_INTERNAL_OUTPUT_PORTS),
+		.base_internal_output_port = htons(DSC_AUDIO_UNIT_BASE_INTERNAL_OUTPUT_PORT),
+		.number_of_controls = htons(DSC_AUDIO_UNIT_NUMBER_OF_CONTROLS),
+		.base_control = htons(DSC_AUDIO_UNIT_BASE_CONTROL),
+		.number_of_signal_selectors = htons(DSC_AUDIO_UNIT_NUMBER_OF_SIGNAL_SELECTORS),
+		.base_signal_selector = htons(DSC_AUDIO_UNIT_BASE_SIGNAL_SELECTOR),
+		.number_of_mixers = htons(DSC_AUDIO_UNIT_NUMBER_OF_MIXERS),
+		.base_mixer = htons(DSC_AUDIO_UNIT_BASE_MIXER),
+		.number_of_matrices = htons(DSC_AUDIO_UNIT_NUMBER_OF_MATRICES),
+		.base_matrix = htons(DSC_AUDIO_UNIT_BASE_MATRIX),
+		.number_of_splitters = htons(DSC_AUDIO_UNIT_NUMBER_OF_SPLITTERS),
+		.base_splitter = htons(DSC_AUDIO_UNIT_BASE_SPLITTER),
+		.number_of_combiners = htons(DSC_AUDIO_UNIT_NUMBER_OF_COMBINERS),
+		.base_combiner = htons(DSC_AUDIO_UNIT_BASE_COMBINER),
+		.number_of_demultiplexers = htons(DSC_AUDIO_UNIT_NUMBER_OF_DEMULTIPLEXERS),
+		.base_demultiplexer = htons(DSC_AUDIO_UNIT_BASE_DEMULTIPLEXER),
+		.number_of_multiplexers = htons(DSC_AUDIO_UNIT_NUMBER_OF_MULTIPLEXERS),
+		.base_multiplexer = htons(DSC_AUDIO_UNIT_BASE_MULTIPLEXER),
+		.number_of_transcoders = htons(DSC_AUDIO_UNIT_NUMBER_OF_TRANSCODERS),
+		.base_transcoder = htons(DSC_AUDIO_UNIT_BASE_TRANSCODER),
+		.number_of_control_blocks = htons(DSC_AUDIO_UNIT_NUMBER_OF_CONTROL_BLOCKS),
+		.base_control_block = htons(DSC_AUDIO_UNIT_BASE_CONTROL_BLOCK),
+		.current_sampling_rate = htonl(DSC_AUDIO_UNIT_CURRENT_SAMPLING_RATE_IN_HZ),
+		.sampling_rates_offset = htons(DSC_AUDIO_UNIT_SAMPLING_RATES_OFFSET),
+		.sampling_rates_count = htons(DSC_AUDIO_UNIT_SUPPORTED_SAMPLING_RATE_COUNT),
 		},
 		.sampling_rates = {
 			// Set the list of supported audio unit sample rate
-			{ .pull_frequency = htonl(48000) },
-			{ .pull_frequency = htonl(96000) },
+			{ .pull_frequency = htonl(DSC_AUDIO_UNIT_SUPPORTED_SAMPLING_RATE_IN_HZ_0) },
 		}
 	};
 	server_add_descriptor(server, AVB_AEM_DESC_AUDIO_UNIT, 0,
