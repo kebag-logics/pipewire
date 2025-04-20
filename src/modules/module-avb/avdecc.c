@@ -175,7 +175,7 @@ int avb_server_make_socket(struct server *server, uint16_t type, const uint8_t m
 	// 		(uint64_t)server->mac_addr[5];
 
 	// TODO: Replaced MAC Address witht static value.
-	server->entity_id = (uint64_t)DSC_ENTITY_MODEL_ENTITY_ID
+	server->entity_id = (uint64_t)DSC_ENTITY_MODEL_ENTITY_ID;
 
 	spa_zero(sll);
 	sll.sll_family = AF_PACKET;
