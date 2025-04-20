@@ -20,6 +20,7 @@ static inline void init_descriptors(struct server *server)
 {
 	// TODO PERSISTENCE: retrieve the saved buffers.
 	// TODO: Add Milan references
+	// TODO: Make defines as long as specified length
 	/**************************************************************************************/
 	/* IEEE 1722.1-2021, Sec. 7.2.12 - STRINGS Descriptor 
 	* Up to 7 localized strings
@@ -383,12 +384,6 @@ static inline void init_descriptors(struct server *server)
 	/* IEEE 1722.1-2021, Sec. 7.2.13 STREAM_PORT_INPUT Descriptor */
 	/* Milan v1.2, Sec. 5.3.3.7*/
 
-	//TODO: Put in aecp-aem-descriptors.h
-	/* IEEE 1722.1-2021, Table 7-24 - Port Flags */
-	#define AVB_AEM_PORT_FLAG_CLOCK_SYNC_SOURCE 0x0001
-	#define AVB_AEM_PORT_FLAG_ASYNC_SAMPLE_RATE_CONV 0x0002
-	#define AVB_AEM_PORT_FLAG_SYNC_SAMPLE_RATE_CONV 0x0004
-
 	#define DSC_STREAM_PORT_INPUT_CLOCK_DOMAIN_INDEX 0x0000
 	#define DSC_STREAM_PORT_INPUT_PORT_FLAGS AVB_AEM_PORT_FLAG_CLOCK_SYNC_SOURCE
 	/* The number of clusters within the Port. This corresponds to the number of 
@@ -396,20 +391,22 @@ static inline void init_descriptors(struct server *server)
 	 * these clusters. */
 	// TODO: Validate value
 	#define DSC_STREAM_PORT_INPUT_NUMBER_OF_CONTROLS 0
-	#define DSC_STREAM_PORT_INPUT_BASE_CLUSTER 0
+	#define DSC_STREAM_PORT_INPUT_BASE_CONTROL 0
 	// TODO: Validate value
-	#define DSC_STREAM_PORT_INPUT_NUMBER_OF_MAPS 8
+	#define DSC_STREAM_PORT_INPUT_NUMBER_OF_CLUSTERS 8
+	#define DSC_STREAM_PORT_INPUT_BASE_CLUSTER 0
+	#define DSC_STREAM_PORT_INPUT_NUMBER_OF_MAPS 1
 	#define DSC_STREAM_PORT_INPUT_BASE_MAP 0
 
 	struct avb_aem_desc_stream_port stream_port_input0 = {
-		.clock_domain_index = htons(0),
-		.port_flags = htons(1),
-		.number_of_controls = htons(0),
-		.base_control = htons(0),
-		.number_of_clusters = htons(8),
-		.base_cluster = htons(0),
-		.number_of_maps = htons(1),
-		.base_map = htons(0),
+		.clock_domain_index = htons(DSC_STREAM_PORT_INPUT_CLOCK_DOMAIN_INDEX),
+		.port_flags = htons(DSC_STREAM_PORT_INPUT_PORT_FLAGS),
+		.number_of_controls = htons(DSC_STREAM_PORT_INPUT_NUMBER_OF_CONTROLS),
+		.base_control = htons(DSC_STREAM_PORT_INPUT_BASE_CONTROL),
+		.number_of_clusters = htons(DSC_STREAM_PORT_INPUT_NUMBER_OF_CLUSTERS),
+		.base_cluster = htons(DSC_STREAM_PORT_INPUT_BASE_CLUSTER),
+		.number_of_maps = htons(DSC_STREAM_PORT_INPUT_NUMBER_OF_MAPS),
+		.base_map = htons(DSC_STREAM_PORT_INPUT_BASE_MAP),
 	};
 	server_add_descriptor(server, AVB_AEM_DESC_STREAM_PORT_INPUT, 0,
 			sizeof(stream_port_input0), &stream_port_input0);
