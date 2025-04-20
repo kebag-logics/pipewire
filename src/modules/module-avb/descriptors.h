@@ -411,6 +411,20 @@ static inline void init_descriptors(struct server *server)
 	server_add_descriptor(server, AVB_AEM_DESC_STREAM_PORT_INPUT, 0,
 			sizeof(stream_port_input0), &stream_port_input0);
 
+	/**************************************************************************************/
+	/* IEEE 1722.1-2021, Sec. 7.2.13 STREAM_PORT_OUTPUT Descriptor */
+	/* Milan v1.2, Sec. 5.3.3.7*/
+	
+	#define DSC_STREAM_PORT_OUTPUT_CLOCK_DOMAIN_INDEX 0
+	#define DSC_STREAM_PORT_OUTPUT_PORT_FLAGS AVB_AEM_PORT_FLAG_NO_FLAG
+	#define DSC_STREAM_PORT_OUTPUT_NUMBER_OF_CONTROLS 0
+	#define DSC_STREAM_PORT_OUTPUT_BASE_CONTROL 0
+	// TODO: Verify
+	#define DSC_STREAM_PORT_OUTPUT_NUMBER_OF_CLUSTERS 8
+	#define DSC_STREAM_PORT_OUTPUT_BASE_CLUSTER 8
+	#define DSC_STREAM_PORT_OUTPUT_NUMBER_OF_MAPS 1
+	#define DSC_STREAM_PORT_OUTPUT_BASE_MAP 1
+
 	struct avb_aem_desc_stream_port stream_port_output0 = {
 		.clock_domain_index = htons(0),
 		.port_flags = htons(0),
