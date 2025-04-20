@@ -5,6 +5,9 @@
 /* SPDX-FileCopyrightText: Copyright © 2025 Simon Gapp <simon.gapp@kebag-logic.com> */
 /* SPDX-License-Identifier: MIT */
 
+#ifndef DESCRIPTORS_H
+#define DESCRIPTORS_H
+
 #include "adp.h"
 #include "aecp-aem.h"
 #include "aecp-aem-descriptors.h"
@@ -16,6 +19,7 @@
 static inline void init_descriptors(struct server *server)
 {
 	// TODO PERSISTENCE: retrieve the saved buffers.
+	// TODO: Add Milan references
 	/**************************************************************************************/
 	/* IEEE 1722.1-2021, Sec. 7.2.12 - STRINGS Descriptor 
 	* Up to 7 localized strings
@@ -34,6 +38,7 @@ static inline void init_descriptors(struct server *server)
 		.string_3 = DSC_STRINGS_3
 	});
 
+	/**************************************************************************************/
 	/* IEEE 1722.1-2021, Sec. 7.2.11 - LOCALE Descriptor */
 	#define DSC_LOCALE_LANGUAGE_CODE "en-EN"
 	#define DSC_LOCALE_NO_OF_STRINGS 1
@@ -43,15 +48,15 @@ static inline void init_descriptors(struct server *server)
 			&(struct avb_aem_desc_locale)
 	{
 		.locale_identifier = DSC_LOCALE_LANGUAGE_CODE,
-		.number_of_strings = DSC_LOCALE_NO_OF_STRINGS,
-		.base_strings = DSC_LOCALE_BASE_STRINGS
+		.number_of_strings = htons(DSC_LOCALE_NO_OF_STRINGS),
+		.base_strings = htons(DSC_LOCALE_BASE_STRINGS)
 	});
 
 	/**************************************************************************************/
 	/* IEEE 1722.1-2021, Sec. 7.2.1 - ENTITY Descriptor */
 	#define DSC_ENTITY_MODEL_ENTITY_ID 0xDEAD00BEEF00FEED
 	#define DSC_ENTITY_MODEL_ID 0
-	#define DSC_ENTITY_MODEL_ENTITY_CAPABILITIES CAPABILITIES (AVB_ADP_ENTITY_CAPABILITY_AEM_SUPPORTED | \
+	#define DSC_ENTITY_MODEL_ENTITY_CAPABILITIES (AVB_ADP_ENTITY_CAPABILITY_AEM_SUPPORTED | \
 			AVB_ADP_ENTITY_CAPABILITY_CLASS_A_SUPPORTED | \
 			AVB_ADP_ENTITY_CAPABILITY_GPTP_SUPPORTED | \
 			AVB_ADP_ENTITY_CAPABILITY_AEM_IDENTIFY_CONTROL_INDEX_VALID | \
@@ -239,7 +244,7 @@ static inline void init_descriptors(struct server *server)
 			.block_latency = htons(DSC_CONTROL_BLOCK_LATENCY),
 			.control_latency = htons(DSC_CONTROL_CONTROL_LATENCY),
 			.control_domain = htons(DSC_CONTROL_CONTROL_DOMAIN),
-			.control_value_type = htons(DSC_CONTROL_CONTROL_DOMAIN),
+			.control_value_type = htons(DSC_CONTROL_CONTROL_VALUE_TYPE),
 			.control_type = htobe64(DSC_CONTROL_CONTROL_TYPE),
 			.reset_time = htonl(DSC_CONTROL_RESET_TIME),
 			// TODO: This is not specified in Table 7-38
@@ -261,7 +266,7 @@ static inline void init_descriptors(struct server *server)
 	};
 	server_add_descriptor(server, AVB_AEM_DESC_CONTROL, 0,
 			sizeof(ctrl), &ctrl);
-	
+
 	/**************************************************************************************/
 	/* IEEE 1722.1-2021, Sec. 7.2.19 AUDIO_MAP Descriptor */
 	// TODO: Prepared for for loop over total number of audio maps
@@ -374,6 +379,28 @@ static inline void init_descriptors(struct server *server)
 				sizeof(clusters[0]), &clusters[cluster_idx]);
 	}
 
+	/**************************************************************************************/
+	/* IEEE 1722.1-2021, Sec. 7.2.13 STREAM_PORT_INPUT Descriptor */
+	/* Milan v1.2, Sec. 5.3.3.7*/
+
+	//TODO: Put in aecp-aem-descriptors.h
+	/* IEEE 1722.1-2021, Table 7-24 - Port Flags */
+	#define AVB_AEM_PORT_FLAG_CLOCK_SYNC_SOURCE 0x0001
+	#define AVB_AEM_PORT_FLAG_ASYNC_SAMPLE_RATE_CONV 0x0002
+	#define AVB_AEM_PORT_FLAG_SYNC_SAMPLE_RATE_CONV 0x0004
+
+	#define DSC_STREAM_PORT_INPUT_CLOCK_DOMAIN_INDEX 0x0000
+	#define DSC_STREAM_PORT_INPUT_PORT_FLAGS AVB_AEM_PORT_FLAG_CLOCK_SYNC_SOURCE
+	/* The number of clusters within the Port. This corresponds to the number of 
+	 * AUDIO_CLUSTER, VIDEO_CLUSTER or SENSOR_CLUSTER descriptors which represent 
+	 * these clusters. */
+	// TODO: Validate value
+	#define DSC_STREAM_PORT_INPUT_NUMBER_OF_CONTROLS 0
+	#define DSC_STREAM_PORT_INPUT_BASE_CLUSTER 0
+	// TODO: Validate value
+	#define DSC_STREAM_PORT_INPUT_NUMBER_OF_MAPS 8
+	#define DSC_STREAM_PORT_INPUT_BASE_MAP 0
+
 	struct avb_aem_desc_stream_port stream_port_input0 = {
 		.clock_domain_index = htons(0),
 		.port_flags = htons(1),
@@ -384,7 +411,6 @@ static inline void init_descriptors(struct server *server)
 		.number_of_maps = htons(1),
 		.base_map = htons(0),
 	};
-
 	server_add_descriptor(server, AVB_AEM_DESC_STREAM_PORT_INPUT, 0,
 			sizeof(stream_port_input0), &stream_port_input0);
 
@@ -650,3 +676,5 @@ static inline void init_descriptors(struct server *server)
 	server_add_descriptor(server, AVB_AEM_DESC_CLOCK_DOMAIN, 0,
 			sizeof(clock_domain), &clock_domain);
 }
+
+#endif
