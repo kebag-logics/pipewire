@@ -56,7 +56,10 @@
 #define AVB_AEM_DESC_MAX_17221   		0x0029
 
 
-#define AVB_AEM_DESC_INVALID			0xffff
+/* IEEE 1722.1-2021, Table 7-24 - Port Flags */
+#define AVB_AEM_PORT_FLAG_CLOCK_SYNC_SOURCE 0x0001
+#define AVB_AEM_PORT_FLAG_ASYNC_SAMPLE_RATE_CONV 0x0002
+#define AVB_AEM_PORT_FLAG_SYNC_SAMPLE_RATE_CONV 0x0004
 
 struct avb_aem_desc_entity {
 	uint64_t entity_id;
