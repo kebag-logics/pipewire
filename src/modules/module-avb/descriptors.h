@@ -712,8 +712,8 @@ static inline void init_descriptors(struct server *server)
 
 
 	/**************************************************************************************/
-    /* IEEE 1722.1-2021, Sec. 7.2.7 STREAM_OUTPUT Descriptor */
-    /* Milan v1.2, Sec. 5.3.3.5 */
+    /* IEEE 1722.1-2021, Sec. 7.2.6 STREAM_OUTPUT Descriptor */
+    /* Milan v1.2, Sec. 5.3.3.4 */
 
     #define DSC_STREAM_OUTPUT_OBJECT_NAME "Stream output 1"
     #define DSC_STREAM_OUTPUT_LOCALIZED_DESCRIPTION AVB_AEM_DESC_INVALID
@@ -739,6 +739,7 @@ static inline void init_descriptors(struct server *server)
     #define DSC_STREAM_OUTPUT_AVB_INTERFACE_INDEX 0
     #define DSC_STREAM_OUTPUT_BUFFER_LENGTH_IN_NS 8
 
+    // TODO: No hardcoded values!
     #define DSC_STREAM_OUTPUT_FORMATS_0 0x0205022000406000ULL
     #define DSC_STREAM_OUTPUT_FORMATS_1 0x0205022000806000ULL
     #define DSC_STREAM_OUTPUT_FORMATS_2 0x0205022001006000ULL
@@ -780,24 +781,41 @@ static inline void init_descriptors(struct server *server)
     server_add_descriptor(server, AVB_AEM_DESC_STREAM_OUTPUT, 0,
             sizeof(stream_output_0), &stream_output_0);
 
+    /**************************************************************************************/
+    /* IEEE 1722.1-2021, Sec. 7.2.8 AVB Interface Descriptor */
+    /* Milan v1.2, Sec. 5.3.3.5 */
+
+    #define DSC_AVB_INTERFACE_LOCALIZED_DESCRIPTION AVB_AEM_DESC_INVALID
+    #define DSC_AVB_INTERFACE_INTERFACE_FLAGS (AVB_AEM_DESC_AVB_INTERFACE_FLAG_GPTP_GRANDMASTER_SUPPORTED | \
+        AVB_AEM_DESC_AVB_INTERFACE_FLAG_GPTP_SUPPORTED | \
+        AVB_AEM_DESC_AVB_INTERFACE_FLAG_SRP_SUPPORTED)
+    // TODO: This is a dynamic parameter
+    #define DSC_AVB_INTERFACE_CLOCK_IDENTITY 0x3cc0c6FFFE0002CB
+    #define DSC_AVB_INTERFACE_PRIORITY1 0xF8
+    #define DSC_AVB_INTERFACE_CLOCK_CLASS 0xF8
+    #define DSC_AVB_INTERFACE_OFFSET_SCALED_LOG_VARIANCE 0x436A
+    #define DSC_AVB_INTERFACE_CLOCK_ACCURACY 0x21
+    #define DSC_AVB_INTERFACE_PRIORITY2 0xF8
+    #define DSC_AVB_INTERFACE_DOMAIN_NUMBER 0
+    #define DSC_AVB_INTERFACE_LOG_SYNC_INTERVAL 0
+    #define DSC_AVB_INTERFACE_LOG_ANNOUNCE_INTERVAL 0
+    #define DSC_AVB_INTERFACE_PDELAY_INTERVAL 0
+    #define DSC_AVB_INTERFACE_PORT_NUMBER 0
 
 	struct avb_aem_desc_avb_interface avb_interface = {
-		.localized_description = htons(0xffff),
-		.interface_flags = htons(
-				AVB_AEM_DESC_AVB_INTERFACE_FLAG_GPTP_GRANDMASTER_SUPPORTED |
-				AVB_AEM_DESC_AVB_INTERFACE_FLAG_GPTP_SUPPORTED |
-				AVB_AEM_DESC_AVB_INTERFACE_FLAG_SRP_SUPPORTED),
-		.clock_identity = htobe64(0x3cc0c6FFFE000641),
-		.priority1 = 0xF8,
-		.clock_class = 0xF8,
-		.offset_scaled_log_variance = htons(0x436A),
-		.clock_accuracy = 0x21,
-		.priority2 = 0xf8,
-		.domain_number = 0,
-		.log_sync_interval = 0,
-		.log_announce_interval = 0,
-		.log_pdelay_interval = 0,
-		.port_number = 0,
+		.localized_description = htons(DSC_AVB_INTERFACE_LOCALIZED_DESCRIPTION),
+		.interface_flags = htons(DSC_AVB_INTERFACE_INTERFACE_FLAGS),
+		.clock_identity = htobe64(DSC_AVB_INTERFACE_CLOCK_IDENTITY),
+		.priority1 = DSC_AVB_INTERFACE_PRIORITY1,
+		.clock_class = DSC_AVB_INTERFACE_CLOCK_CLASS,
+		.offset_scaled_log_variance = htons(DSC_AVB_INTERFACE_OFFSET_SCALED_LOG_VARIANCE),
+		.clock_accuracy = DSC_AVB_INTERFACE_CLOCK_ACCURACY,
+		.priority2 = DSC_AVB_INTERFACE_PRIORITY2,
+		.domain_number = DSC_AVB_INTERFACE_DOMAIN_NUMBER,
+		.log_sync_interval = DSC_AVB_INTERFACE_LOG_SYNC_INTERVAL,
+		.log_announce_interval = DSC_AVB_INTERFACE_LOG_ANNOUNCE_INTERVAL,
+		.log_pdelay_interval = DSC_AVB_INTERFACE_PDELAY_INTERVAL,
+		.port_number = DSC_AVB_INTERFACE_PORT_NUMBER,
 	};
 
 	memset(avb_interface.object_name, 0, sizeof(avb_interface.object_name));
@@ -806,44 +824,76 @@ static inline void init_descriptors(struct server *server)
 	server_add_descriptor(server, AVB_AEM_DESC_AVB_INTERFACE, 0,
 			sizeof(avb_interface), &avb_interface);
 
-	struct avb_aem_desc_clock_source clock_source_internal = {
-		.object_name = "Internal",
-		.localized_description = htons(0xffff),
-		.clock_source_flags = htons(2),
-		.clock_source_type = htons(
-				AVB_AEM_DESC_CLOCK_SOURCE_TYPE_INTERNAL),
-		.clock_source_identifier = htobe64(0),
-		.clock_source_location_type = htons(AVB_AEM_DESC_CLOCK_SOURCE),
-		.clock_source_location_index = htons(0),
-	};
-	server_add_descriptor(server, AVB_AEM_DESC_CLOCK_SOURCE, 0,
-			sizeof(clock_source_internal), &clock_source_internal);
+    /**************************************************************************************/
+    /* IEEE 1722.1-2021, Sec. 7.2.9 CLOCK_SOURCE Descriptor */
+    /* Milan v1.2, Sec. 5.3.3.6 */
 
-	struct avb_aem_desc_clock_source clock_source_aaf = {
-		.object_name = "Stream Clock",
-		.localized_description = htons(0xffff),
-		.clock_source_flags = htons(2),
-		.clock_source_type = htons(
-				AVB_AEM_DESC_CLOCK_SOURCE_TYPE_INPUT_STREAM),
-		.clock_source_identifier = htobe64(0),
-		.clock_source_location_type = htons(AVB_AEM_DESC_STREAM_INPUT),
-		.clock_source_location_index = htons(0),
-	};
-	server_add_descriptor(server, AVB_AEM_DESC_CLOCK_SOURCE, 1,
-			sizeof(clock_source_aaf), &clock_source_aaf);
+    // Internal Clock Source
+    #define DSC_CLOCK_SOURCE_INTERNAL_OBJECT_NAME "Internal"
+    #define DSC_CLOCK_SOURCE_INTERNAL_LOCALIZED_DESCRIPTION AVB_AEM_DESC_INVALID
+    #define DSC_CLOCK_SOURCE_INTERNAL_FLAGS 0x0002
+    #define DSC_CLOCK_SOURCE_INTERNAL_TYPE AVB_AEM_DESC_CLOCK_SOURCE_TYPE_INTERNAL
+    #define DSC_CLOCK_SOURCE_INTERNAL_IDENTIFIER 0
+    #define DSC_CLOCK_SOURCE_INTERNAL_LOCATION_TYPE AVB_AEM_DESC_CLOCK_SOURCE
+    #define DSC_CLOCK_SOURCE_INTERNAL_LOCATION_INDEX 0
 
-	struct avb_aem_desc_clock_source clock_source_crf = {
-		.object_name = "CRF Clock",
-		.localized_description = htons(0xffff),
-		.clock_source_flags = htons(2),
-		.clock_source_type = htons(
-				AVB_AEM_DESC_CLOCK_SOURCE_TYPE_INPUT_STREAM),
-		.clock_source_identifier = htobe64(0),
-		.clock_source_location_type = htons(AVB_AEM_DESC_STREAM_INPUT),
-		.clock_source_location_index = htons(1),
-	};
-	server_add_descriptor(server, AVB_AEM_DESC_CLOCK_SOURCE, 2,
-			sizeof(clock_source_crf), &clock_source_crf);
+    // AAF Stream Clock Source
+    #define DSC_CLOCK_SOURCE_AAF_OBJECT_NAME "Stream Clock"
+    #define DSC_CLOCK_SOURCE_AAF_LOCALIZED_DESCRIPTION AVB_AEM_DESC_INVALID
+    #define DSC_CLOCK_SOURCE_AAF_FLAGS 0x0002
+    #define DSC_CLOCK_SOURCE_AAF_TYPE AVB_AEM_DESC_CLOCK_SOURCE_TYPE_INPUT_STREAM
+    #define DSC_CLOCK_SOURCE_AAF_IDENTIFIER 0
+    #define DSC_CLOCK_SOURCE_AAF_LOCATION_TYPE AVB_AEM_DESC_STREAM_INPUT
+    #define DSC_CLOCK_SOURCE_AAF_LOCATION_INDEX 0
+
+    // CRF Clock Source
+    #define DSC_CLOCK_SOURCE_CRF_OBJECT_NAME "CRF Clock"
+    #define DSC_CLOCK_SOURCE_CRF_LOCALIZED_DESCRIPTION AVB_AEM_DESC_INVALID
+    #define DSC_CLOCK_SOURCE_CRF_FLAGS 0x0002
+    #define DSC_CLOCK_SOURCE_CRF_TYPE AVB_AEM_DESC_CLOCK_SOURCE_TYPE_INPUT_STREAM
+    #define DSC_CLOCK_SOURCE_CRF_IDENTIFIER 0
+    #define DSC_CLOCK_SOURCE_CRF_LOCATION_TYPE AVB_AEM_DESC_STREAM_INPUT
+    #define DSC_CLOCK_SOURCE_CRF_LOCATION_INDEX 1
+
+    // Internal Clock Descriptor
+    struct avb_aem_desc_clock_source clock_source_internal = {
+        .object_name = DSC_CLOCK_SOURCE_INTERNAL_OBJECT_NAME,
+        .localized_description = htons(DSC_CLOCK_SOURCE_INTERNAL_LOCALIZED_DESCRIPTION),
+        .clock_source_flags = htons(DSC_CLOCK_SOURCE_INTERNAL_FLAGS),
+        .clock_source_type = htons(DSC_CLOCK_SOURCE_INTERNAL_TYPE),
+        .clock_source_identifier = htobe64(DSC_CLOCK_SOURCE_INTERNAL_IDENTIFIER),
+        .clock_source_location_type = htons(DSC_CLOCK_SOURCE_INTERNAL_LOCATION_TYPE),
+        .clock_source_location_index = htons(DSC_CLOCK_SOURCE_INTERNAL_LOCATION_INDEX),
+    };
+    server_add_descriptor(server, AVB_AEM_DESC_CLOCK_SOURCE, 0,
+            sizeof(clock_source_internal), &clock_source_internal);
+
+    // AAF Clock Descriptor
+    struct avb_aem_desc_clock_source clock_source_aaf = {
+        .object_name = DSC_CLOCK_SOURCE_AAF_OBJECT_NAME,
+        .localized_description = htons(DSC_CLOCK_SOURCE_AAF_LOCALIZED_DESCRIPTION),
+        .clock_source_flags = htons(DSC_CLOCK_SOURCE_AAF_FLAGS),
+        .clock_source_type = htons(DSC_CLOCK_SOURCE_AAF_TYPE),
+        .clock_source_identifier = htobe64(DSC_CLOCK_SOURCE_AAF_IDENTIFIER),
+        .clock_source_location_type = htons(DSC_CLOCK_SOURCE_AAF_LOCATION_TYPE),
+        .clock_source_location_index = htons(DSC_CLOCK_SOURCE_AAF_LOCATION_INDEX),
+    };
+    server_add_descriptor(server, AVB_AEM_DESC_CLOCK_SOURCE, 1,
+            sizeof(clock_source_aaf), &clock_source_aaf);
+
+    // CRF Clock Descriptor
+    struct avb_aem_desc_clock_source clock_source_crf = {
+        .object_name = DSC_CLOCK_SOURCE_CRF_OBJECT_NAME,
+        .localized_description = htons(DSC_CLOCK_SOURCE_CRF_LOCALIZED_DESCRIPTION),
+        .clock_source_flags = htons(DSC_CLOCK_SOURCE_CRF_FLAGS),
+        .clock_source_type = htons(DSC_CLOCK_SOURCE_CRF_TYPE),
+        .clock_source_identifier = htobe64(DSC_CLOCK_SOURCE_CRF_IDENTIFIER),
+        .clock_source_location_type = htons(DSC_CLOCK_SOURCE_CRF_LOCATION_TYPE),
+        .clock_source_location_index = htons(DSC_CLOCK_SOURCE_CRF_LOCATION_INDEX),
+    };
+    server_add_descriptor(server, AVB_AEM_DESC_CLOCK_SOURCE, 2,
+            sizeof(clock_source_crf), &clock_source_crf);
+
 
 	struct {
 		struct avb_aem_desc_clock_domain desc;
