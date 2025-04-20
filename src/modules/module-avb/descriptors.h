@@ -711,42 +711,75 @@ static inline void init_descriptors(struct server *server)
             sizeof(stream_input_crf_0), &stream_input_crf_0);
 
 
-	struct {
-		struct avb_aem_desc_stream desc;
-		uint64_t stream_formats[6];
-	} __attribute__ ((__packed__)) stream_output_0 =
-	{
-		{
-		.object_name = "Stream output 1",
-		.localized_description = htons(0xffff),
-		.clock_domain_index = htons(0),
-		.stream_flags = htons(
-				AVB_AEM_DESC_STREAM_FLAG_CLASS_A),
-		.current_format = htobe64(0x0205022002006000ULL),
-		.formats_offset = htons(
-			4 + sizeof(struct avb_aem_desc_stream)),
-		.number_of_formats = htons(5),
-		.backup_talker_entity_id_0 = htobe64(0),
-		.backup_talker_unique_id_0 = htons(0),
-		.backup_talker_entity_id_1 = htobe64(0),
-		.backup_talker_unique_id_1 = htons(0),
-		.backup_talker_entity_id_2 = htobe64(0),
-		.backup_talker_unique_id_2 = htons(0),
-		.backedup_talker_entity_id = htobe64(0),
-		.backedup_talker_unique = htons(0),
-		.avb_interface_index = htons(0),
-		.buffer_length = htons(8)
-		},
-		.stream_formats = {
-			htobe64(0x0205022000406000ULL),
-			htobe64(0x0205022000806000ULL),
-			htobe64(0x0205022001006000ULL),
-			htobe64(0x0205022001806000ULL),
-			htobe64(0x0205022002006000ULL),
-		},
-	};
-	server_add_descriptor(server, AVB_AEM_DESC_STREAM_OUTPUT, 0,
-			sizeof(stream_output_0), &stream_output_0);
+	/**************************************************************************************/
+    /* IEEE 1722.1-2021, Sec. 7.2.7 STREAM_OUTPUT Descriptor */
+    /* Milan v1.2, Sec. 5.3.3.5 */
+
+    #define DSC_STREAM_OUTPUT_OBJECT_NAME "Stream output 1"
+    #define DSC_STREAM_OUTPUT_LOCALIZED_DESCRIPTION AVB_AEM_DESC_INVALID
+    #define DSC_STREAM_OUTPUT_CLOCK_DOMAIN_INDEX 0
+    #define DSC_STREAM_OUTPUT_STREAM_FLAGS (AVB_AEM_DESC_STREAM_FLAG_CLASS_A)
+    #define DSC_STREAM_OUTPUT_CURRENT_FORMAT 0x0205022002006000ULL
+
+    #define DSC_STREAM_OUTPUT_FORMATS_OFFSET (4 + sizeof(struct avb_aem_desc_stream))
+    #define DSC_STREAM_OUTPUT_NUMBER_OF_FORMATS 5
+
+    #define DSC_STREAM_OUTPUT_BACKUP_TALKER_ENTITY_ID_0 0
+    #define DSC_STREAM_OUTPUT_BACKUP_TALKER_UNIQUE_ID_0 0
+
+    #define DSC_STREAM_OUTPUT_BACKUP_TALKER_ENTITY_ID_1 0
+    #define DSC_STREAM_OUTPUT_BACKUP_TALKER_UNIQUE_ID_1 0
+
+    #define DSC_STREAM_OUTPUT_BACKUP_TALKER_ENTITY_ID_2 0
+    #define DSC_STREAM_OUTPUT_BACKUP_TALKER_UNIQUE_ID_2 0
+
+    #define DSC_STREAM_OUTPUT_BACKEDUP_TALKER_ENTITY_ID 0
+    #define DSC_STREAM_OUTPUT_BACKEDUP_TALKER_UNIQUE_ID 0
+
+    #define DSC_STREAM_OUTPUT_AVB_INTERFACE_INDEX 0
+    #define DSC_STREAM_OUTPUT_BUFFER_LENGTH_IN_NS 8
+
+    #define DSC_STREAM_OUTPUT_FORMATS_0 0x0205022000406000ULL
+    #define DSC_STREAM_OUTPUT_FORMATS_1 0x0205022000806000ULL
+    #define DSC_STREAM_OUTPUT_FORMATS_2 0x0205022001006000ULL
+    #define DSC_STREAM_OUTPUT_FORMATS_3 0x0205022001806000ULL
+    #define DSC_STREAM_OUTPUT_FORMATS_4 DSC_STREAM_OUTPUT_CURRENT_FORMAT
+
+    struct {
+        struct avb_aem_desc_stream desc;
+        uint64_t stream_formats[DSC_STREAM_OUTPUT_NUMBER_OF_FORMATS];
+    } __attribute__ ((__packed__)) stream_output_0 =
+    {
+        {
+            .object_name = DSC_STREAM_OUTPUT_OBJECT_NAME,
+            .localized_description = htons(DSC_STREAM_OUTPUT_LOCALIZED_DESCRIPTION),
+            .clock_domain_index = htons(DSC_STREAM_OUTPUT_CLOCK_DOMAIN_INDEX),
+            .stream_flags = htons(DSC_STREAM_OUTPUT_STREAM_FLAGS),
+            .current_format = htobe64(DSC_STREAM_OUTPUT_CURRENT_FORMAT),
+            .formats_offset = htons(DSC_STREAM_OUTPUT_FORMATS_OFFSET),
+            .number_of_formats = htons(DSC_STREAM_OUTPUT_NUMBER_OF_FORMATS),
+            .backup_talker_entity_id_0 = htobe64(DSC_STREAM_OUTPUT_BACKUP_TALKER_ENTITY_ID_0),
+            .backup_talker_unique_id_0 = htons(DSC_STREAM_OUTPUT_BACKUP_TALKER_UNIQUE_ID_0),
+            .backup_talker_entity_id_1 = htobe64(DSC_STREAM_OUTPUT_BACKUP_TALKER_ENTITY_ID_1),
+            .backup_talker_unique_id_1 = htons(DSC_STREAM_OUTPUT_BACKUP_TALKER_UNIQUE_ID_1),
+            .backup_talker_entity_id_2 = htobe64(DSC_STREAM_OUTPUT_BACKUP_TALKER_ENTITY_ID_2),
+            .backup_talker_unique_id_2 = htons(DSC_STREAM_OUTPUT_BACKUP_TALKER_UNIQUE_ID_2),
+            .backedup_talker_entity_id = htobe64(DSC_STREAM_OUTPUT_BACKEDUP_TALKER_ENTITY_ID),
+            .backedup_talker_unique = htons(DSC_STREAM_OUTPUT_BACKEDUP_TALKER_UNIQUE_ID),
+            .avb_interface_index = htons(DSC_STREAM_OUTPUT_AVB_INTERFACE_INDEX),
+            .buffer_length = htons(DSC_STREAM_OUTPUT_BUFFER_LENGTH_IN_NS)
+        },
+        .stream_formats = {
+            htobe64(DSC_STREAM_OUTPUT_FORMATS_0),
+            htobe64(DSC_STREAM_OUTPUT_FORMATS_1),
+            htobe64(DSC_STREAM_OUTPUT_FORMATS_2),
+            htobe64(DSC_STREAM_OUTPUT_FORMATS_3),
+            htobe64(DSC_STREAM_OUTPUT_FORMATS_4),
+        },
+    };
+    server_add_descriptor(server, AVB_AEM_DESC_STREAM_OUTPUT, 0,
+            sizeof(stream_output_0), &stream_output_0);
+
 
 	struct avb_aem_desc_avb_interface avb_interface = {
 		.localized_description = htons(0xffff),
