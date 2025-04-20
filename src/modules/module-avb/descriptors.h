@@ -19,7 +19,6 @@
 static inline void init_descriptors(struct server *server)
 {
 	// TODO PERSISTENCE: retrieve the saved buffers.
-	// TODO: Add Milan references
 	// TODO: Make defines as long as specified length
 	/**************************************************************************************/
 	/* IEEE 1722.1-2021, Sec. 7.2.12 - STRINGS Descriptor 
@@ -55,6 +54,8 @@ static inline void init_descriptors(struct server *server)
 
 	/**************************************************************************************/
 	/* IEEE 1722.1-2021, Sec. 7.2.1 - ENTITY Descriptor */
+	/* Milan v1.2, Sec. 5.3.3.1 */
+
 	#define DSC_ENTITY_MODEL_ENTITY_ID 0xDEAD00BEEF00FEED
 	#define DSC_ENTITY_MODEL_ID 0
 	#define DSC_ENTITY_MODEL_ENTITY_CAPABILITIES (AVB_ADP_ENTITY_CAPABILITY_AEM_SUPPORTED | \
@@ -129,6 +130,7 @@ static inline void init_descriptors(struct server *server)
 
 	/**************************************************************************************/
 	/* IEEE 1722.1-2021, Sec. 7.2.2 - CONFIGURATION Descriptor*/
+	/* Milan v1.2, Sec. 5.3.3.2 */
 	#define DSC_CONFIGURATION_DESCRIPTOR_COUNTS_COUNT 8
 	#define DSC_CONFIGURATION_OBJECT_NAME DSC_STRINGS_1
 	/* IEEE 1722.1-2021, Table 7-3 CONFIGURATION Descriptor
@@ -207,6 +209,8 @@ static inline void init_descriptors(struct server *server)
 
 	/**************************************************************************************/
 	/* IEEE 1722.1-2021, Sec. 7.2.22 CONTROL Descriptor*/
+	/* Milan v1.2, Sec. 5.3.3.10 */
+
 	#define DSC_CONTROL_OBJECT_NAME "Identify"
 	#define DSC_CONTROL_LOCALIZED_DESCRIPTION AVB_AEM_DESC_INVALID
 	#define DSC_CONTROL_BLOCK_LATENCY 500
@@ -270,6 +274,8 @@ static inline void init_descriptors(struct server *server)
 
 	/**************************************************************************************/
 	/* IEEE 1722.1-2021, Sec. 7.2.19 AUDIO_MAP Descriptor */
+	/* Milan v1.2, Sec. 5.3.3.9 */
+
 	// TODO: Prepared for for loop over total number of audio maps
 	#define DSC_AUDIO_MAPS_TOTAL_NO_OF_MAPS 2
 
@@ -318,7 +324,7 @@ static inline void init_descriptors(struct server *server)
 
 	/**************************************************************************************/
 	/* IEEE 1722.1-2021, Sec. 7.2.16 AUDIO_CLUSTER Descriptor */
-	/* Milan v1.2, Sec. 5.3.3.9*/
+	/* Milan v1.2, Sec. 5.3.3.8 */
 	#define DSC_AUDIO_CLUSTER_NO_OF_CLUSTERS 16
 	#define DSC_AUDIO_CLUSTER_OBJECT_NAME_LEN_IN_OCTET 64
 	#define DSC_AUDIO_CLUSTER_OBJECT_NAME_INPUT "Input"
@@ -382,7 +388,7 @@ static inline void init_descriptors(struct server *server)
 
 	/**************************************************************************************/
 	/* IEEE 1722.1-2021, Sec. 7.2.13 STREAM_PORT_INPUT Descriptor */
-	/* Milan v1.2, Sec. 5.3.3.7*/
+	/* Milan v1.2, Sec. 5.3.3.7 */
 
 	#define DSC_STREAM_PORT_INPUT_CLOCK_DOMAIN_INDEX 0x0000
 	#define DSC_STREAM_PORT_INPUT_PORT_FLAGS AVB_AEM_PORT_FLAG_CLOCK_SYNC_SOURCE
@@ -413,7 +419,7 @@ static inline void init_descriptors(struct server *server)
 
 	/**************************************************************************************/
 	/* IEEE 1722.1-2021, Sec. 7.2.13 STREAM_PORT_OUTPUT Descriptor */
-	/* Milan v1.2, Sec. 5.3.3.7*/
+	/* Milan v1.2, Sec. 5.3.3.7 */
 	
 	#define DSC_STREAM_PORT_OUTPUT_CLOCK_DOMAIN_INDEX 0
 	#define DSC_STREAM_PORT_OUTPUT_PORT_FLAGS AVB_AEM_PORT_FLAG_NO_FLAG
@@ -440,7 +446,7 @@ static inline void init_descriptors(struct server *server)
 	
 	/**************************************************************************************/
 	/* IEEE 1722.1-2021, Sec. 7.2.3 AUDIO_UNIT Descriptor */
-	/* Milan v1.2, Sec. 5.3.3.3*/
+	/* Milan v1.2, Sec. 5.3.3.3 */
 
     /* IEEE 1722.1-2021, Sec. 7.3.1 
 	 * A sampling rate consists of a 3 bit pull field 
@@ -515,7 +521,7 @@ static inline void init_descriptors(struct server *server)
 	#define DSC_AUDIO_UNIT_SAMPLING_RATE_BASE_FREQ_IN_HZ		48000
     #define DSC_AUDIO_UNIT_CURRENT_SAMPLING_RATE_IN_HZ          \
     BUILD_SAMPLING_RATE(DSC_AUDIO_UNIT_SAMPLING_RATE_PULL, DSC_AUDIO_UNIT_SAMPLING_RATE_BASE_FREQ_IN_HZ)
-    /*The offset to the sample_rates field from the start of the descriptor.
+    /* The offset to the sample_rates field from the start of the descriptor.
      * This field is 144 for this version of AEM.*/
     #define DSC_AUDIO_UNIT_SAMPLING_RATES_OFFSET                144
 	#define DSC_AUDIO_UNIT_SUPPORTED_SAMPLING_RATE_COUNT        0x0001
@@ -577,7 +583,7 @@ static inline void init_descriptors(struct server *server)
 
     /**************************************************************************************/
 	/* IEEE 1722.1-2021, Sec. 7.2.6 STREAM_INPUT Descriptor */
-	/* Milan v1.2, Sec. 5.3.3.4*/
+	/* Milan v1.2, Sec. 5.3.3.4 */
 
     // TODO: 1722.1 lists redundant parameters that are not mentioned here.
 
