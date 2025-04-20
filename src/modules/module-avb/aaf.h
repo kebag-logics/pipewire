@@ -44,6 +44,7 @@ struct avb_packet_aaf {
 #define AVB_AAF_FORMAT_AES3_32BIT	0x05
 	uint8_t format;
 /* IEEE 1722-2016, Table 11 - nsr field values */
+// Also defined in packets.h, line 126
 #define AVB_AAF_PCM_NSR_USER		0x00
 #define AVB_AAF_PCM_NSR_8KHZ		0x01
 #define AVB_AAF_PCM_NSR_16KHZ		0x02
