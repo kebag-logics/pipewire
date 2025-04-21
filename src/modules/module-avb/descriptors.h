@@ -15,7 +15,7 @@
 #include "aecp-aem-controls.h"
 #include "internal.h"
 #include "descriptor-field-value-types.h"
-#include "entity_model_milan.h"
+#include "entity_model.h"
 
 static inline void init_descriptors(struct server *server)
 {
@@ -28,10 +28,10 @@ static inline void init_descriptors(struct server *server)
 			sizeof(struct avb_aem_desc_strings),
 			&(struct avb_aem_desc_strings)
 	{
-		.string_0 = DSC_STRINGS_0,
-		.string_1 = DSC_STRINGS_1,
-		.string_2 = DSC_STRINGS_2,
-		.string_3 = DSC_STRINGS_3
+		.string_0 = DSC_STRINGS_0_DEVICE_NAME,
+		.string_1 = DSC_STRINGS_1_CONFIGURATION_NAME,
+		.string_2 = DSC_STRINGS_2_MANUFACTURER_NAME,
+		.string_3 = DSC_STRINGS_3_GROUP_NAME
 	});
 
 	/**************************************************************************************/
@@ -273,19 +273,20 @@ static inline void init_descriptors(struct server *server)
 	/**************************************************************************************/
 	/* IEEE 1722.1-2021, Sec. 7.2.13 STREAM_PORT_OUTPUT Descriptor */
 	/* Milan v1.2, Sec. 5.3.3.7 */
-
+#if TALKER_ENABLE
 	struct avb_aem_desc_stream_port stream_port_output0 = {
-		.clock_domain_index = htons(0),
-		.port_flags = htons(0),
-		.number_of_controls = htons(0),
-		.base_control = htons(0),
-		.number_of_clusters = htons(8),
-		.base_cluster = htons(8),
-		.number_of_maps = htons(1),
-		.base_map = htons(1),
+		.clock_domain_index = htons(DSC_STREAM_PORT_OUTPUT_CLOCK_DOMAIN_INDEX),
+		.port_flags = htons(DSC_STREAM_PORT_OUTPUT_PORT_FLAGS),
+		.number_of_controls = htons(DSC_STREAM_PORT_OUTPUT_NUMBER_OF_CONTROLS),
+		.base_control = htons(DSC_STREAM_PORT_OUTPUT_BASE_CONTROL),
+		.number_of_clusters = htons(DSC_STREAM_PORT_OUTPUT_NUMBER_OF_CLUSTERS),
+		.base_cluster = htons(DSC_STREAM_PORT_OUTPUT_BASE_CLUSTER),
+		.number_of_maps = htons(DSC_STREAM_PORT_OUTPUT_NUMBER_OF_MAPS),
+		.base_map = htons(DSC_STREAM_PORT_OUTPUT_BASE_MAP),
 	};
 	server_add_descriptor(server, AVB_AEM_DESC_STREAM_PORT_OUTPUT, 0,
 			sizeof(stream_port_output0), &stream_port_output0);
+#endif
 	
 	/**************************************************************************************/
 	/* IEEE 1722.1-2021, Sec. 7.2.3 AUDIO_UNIT Descriptor */
@@ -425,6 +426,7 @@ static inline void init_descriptors(struct server *server)
     /* IEEE 1722.1-2021, Sec. 7.2.6 STREAM_OUTPUT Descriptor */
     /* Milan v1.2, Sec. 5.3.3.4 */
 
+#if TALKER_ENABLE
     struct {
         struct avb_aem_desc_stream desc;
         uint64_t stream_formats[DSC_STREAM_OUTPUT_NUMBER_OF_FORMATS];
@@ -459,6 +461,7 @@ static inline void init_descriptors(struct server *server)
     };
     server_add_descriptor(server, AVB_AEM_DESC_STREAM_OUTPUT, 0,
             sizeof(stream_output_0), &stream_output_0);
+#endif
 
     /**************************************************************************************/
     /* IEEE 1722.1-2021, Sec. 7.2.8 AVB Interface Descriptor */
