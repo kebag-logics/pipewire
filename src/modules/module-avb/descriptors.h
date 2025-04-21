@@ -111,6 +111,7 @@ static inline void init_descriptors(struct server *server)
 	server_add_descriptor(server, AVB_AEM_DESC_CONFIGURATION, 0,
 			sizeof(config), &config);
 
+#if CONFIGURATION_2_ENABLE
 	/* Second configuration*/
 	struct {
 		struct avb_aem_desc_configuration desc;
@@ -137,6 +138,7 @@ static inline void init_descriptors(struct server *server)
 	};
 	server_add_descriptor(server, AVB_AEM_DESC_CONFIGURATION, 1,
 			sizeof(config), &config1);
+#endif
 
 	/**************************************************************************************/
 	/* IEEE 1722.1-2021, Sec. 7.2.22 CONTROL Descriptor*/
