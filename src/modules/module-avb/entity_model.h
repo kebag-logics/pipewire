@@ -6,6 +6,12 @@
 #ifndef _ENTITY_MODEL_MILAN_H_
 #define _ENTITY_MODEL_MILAN_H_
 
+
+// Enables second configuration for debugging purposes
+#define CONFIGURATION_2_ENABLE 0
+// Disable talker
+#define TALKER_ENABLE 0
+
 // TODO: Make defines as long as specified length
 /**************************************************************************************/
 /* IEEE 1722.1-2021, Sec. 7.2.12 - STRINGS Descriptor 
@@ -37,8 +43,6 @@
 * This is the maximum number of STREAM_OUTPUT 
 * descriptors the ATDECC Entity has for 
 * Output Streams in any of its Configurations */
-
-#define TALKER_ENABLE 0
 
 #if TALKER_ENABLE
     #define DSC_ENTITY_MODEL_TALKER_STREAM_SOURCES 8
@@ -76,7 +80,11 @@
 #define DSC_ENTITY_MODEL_FIRMWARE_VERSION "0.3.48"
 #define DSC_ENTITY_MODEL_GROUP_NAME DSC_STRINGS_3_GROUP_NAME
 #define DSC_ENTITY_MODEL_SERIAL_NUMBER "0xBEBEDEAD"
-#define DSC_ENTITY_MODEL_CONFIGURATIONS_COUNT 2
+#if CONFIGURATION_2_ENABLE
+    #define DSC_ENTITY_MODEL_CONFIGURATIONS_COUNT 2
+#else 
+    #define DSC_ENTITY_MODEL_CONFIGURATIONS_COUNT 1
+#endif
 #define DSC_ENTITY_MODEL_CURRENT_CONFIGURATION 0
 
 /**************************************************************************************/
