@@ -65,6 +65,7 @@ int aecp_aem_cmd_add_audio_mappings(struct aecp *aecp, int64_t now,
     }
 
     stream_port = (struct avb_aem_desc_stream_port*) desc->ptr;
+    dyn_maps_st.base_desc.desc = desc;
 
     if (stream_port->number_of_maps) {
         pw_log_warn("maps are statics for desc %d type %d", desc_index,
@@ -142,7 +143,6 @@ int aecp_aem_cmd_add_audio_mappings(struct aecp *aecp, int64_t now,
         memcpy(format_slot, &formats[mapping_idx], sizeof(*format_slot));
     }
 
-    dyn_maps_st.base_desc.desc = desc;
     rc = aecp_aem_set_state_var(aecp, aecp->server->entity_id, ctrler_index,
                 aecp_aem_dynamic_audio_mappings, 0, &dyn_maps_st);
     if (rc) {
@@ -154,5 +154,5 @@ int aecp_aem_cmd_add_audio_mappings(struct aecp *aecp, int64_t now,
 int aecp_aem_unsol_add_audio_mappings(struct aecp *aecp, int64_t now)
 {
     return aecp_aem_unsol_addrem_mapping(aecp,
-                                    AVB_AECP_AEM_CMD_REMOVE_AUDIO_MAPPINGS);
+                                    AVB_AECP_AEM_CMD_ADD_AUDIO_MAPPINGS);
 }

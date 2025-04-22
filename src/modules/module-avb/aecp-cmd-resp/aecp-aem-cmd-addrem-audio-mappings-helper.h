@@ -19,6 +19,7 @@ static inline int aecp_aem_unsol_addrem_mapping(struct aecp *aecp, uint16_t type
     struct avb_packet_aecp_aem_addrem_mappings *amap =
         (struct avb_packet_aecp_aem_addrem_mappings *) p->payload;
     struct avb_aem_audio_mapping_format *formats;
+    struct descriptor *desc;
 
     size_t len;
     int rc;
@@ -34,29 +35,40 @@ static inline int aecp_aem_unsol_addrem_mapping(struct aecp *aecp, uint16_t type
     }
 
     dyn_maps_st.base_desc.base_info.needs_update = false;
-
     memset(buf, 0, sizeof(buf));
-    // We remove one ( -1 ) because it is included in the base
-    len = sizeof(*p) + sizeof(*h) + sizeof(*amap) +
-        (dyn_maps_st.mappings_max_count - dyn_maps_st.mapping_free_count - 1);
 
-    if (len < sizeof(buf)) {
+    len = sizeof(*p) + sizeof(*h) + sizeof(*amap) +
+        (dyn_maps_st.mappings_max_count - dyn_maps_st.mapping_free_count)
+             * sizeof( struct avb_aem_audio_mapping_format);
+
+    if (len > sizeof(buf)) {
         pw_log_error("buffer space too small\n");
         spa_assert(0);
     }
-    formats = amap->mappings;
+    formats = &amap->mappings[0];
 
     for (size_t map_idx = 0; map_idx < (size_t)dyn_maps_st.mappings_max_count;
             map_idx++) {
         if (dyn_maps_st.format_slot_allocated[map_idx]) {
-            memcpy(&formats, &dyn_maps_st.formats[map_idx], sizeof(*formats));
+            memcpy(formats, &dyn_maps_st.formats[map_idx], sizeof(*formats));
             formats++;
         }
     }
 
+    desc = dyn_maps_st.base_desc.desc;
+    amap->descriptor_id = htons(desc->index);
+    amap->descriptor_type = htons(desc->type);
+    amap->number_of_mappings = htons( dyn_maps_st.mappings_max_count -
+                                        dyn_maps_st.mapping_free_count);
+
     AVB_PACKET_AEM_SET_COMMAND_TYPE(p, type);
     rc = reply_unsolicited_notifications(aecp, &dyn_maps_st.base_desc.base_info,
             buf, len, false);
+    if (rc) {
+        spa_assert(0);
+    }
+    rc = aecp_aem_refresh_state_var(aecp, aecp->server->entity_id,
+                aecp_aem_dynamic_audio_mappings, 0, &dyn_maps_st);
 
     return rc;
 }

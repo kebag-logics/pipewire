@@ -162,6 +162,7 @@ struct avb_packet_aecp_aem_addrem_mappings {
 	uint16_t descriptor_type;
 	uint16_t descriptor_id;
 	uint16_t number_of_mappings;
+	uint16_t reserved;
 	struct avb_aem_audio_mapping_format mappings[0];
 }__attribute__ ((__packed__));
 
