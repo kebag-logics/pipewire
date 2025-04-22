@@ -17,6 +17,7 @@ static struct avb_aem_audio_mapping_format *aecp_aem_retrieve_free_slot(
     for (int maps = 0; maps < dyn_map_st->mappings_max_count; maps++) {
         if (!dyn_map_st->format_slot_allocated[maps]) {
             dyn_map_st->mapping_free_count--;
+            dyn_map_st->format_slot_allocated[maps] = true;
             return &dyn_map_st->formats[maps];
         }
     }
@@ -32,7 +33,7 @@ int aecp_aem_cmd_add_audio_mappings(struct aecp *aecp, int64_t now,
 	struct server *server = aecp->server;
 	const struct avb_ethernet_header *h = m;
 	const struct avb_packet_aecp_aem *p = SPA_PTROFF(h, sizeof(*h), void);
-    struct avb_packet_aecp_aem_add_mappings *amap;
+    struct avb_packet_aecp_aem_addrem_mappings *amap;
     struct descriptor *desc;
     struct avb_aem_audio_mapping_format *formats, *format_slot;
     struct avb_aem_desc_stream_port *stream_port;
@@ -46,7 +47,7 @@ int aecp_aem_cmd_add_audio_mappings(struct aecp *aecp, int64_t now,
     uint64_t stream_format;
     bool has_failed = false;
 
-    amap = (struct avb_packet_aecp_aem_add_mappings *)p->payload;
+    amap = (struct avb_packet_aecp_aem_addrem_mappings *)p->payload;
     desc_type = ntohs(amap->descriptor_type);
     desc_index = ntohs(amap->descriptor_id);
     maps_count = ntohs(amap->number_of_mappings);
@@ -66,7 +67,8 @@ int aecp_aem_cmd_add_audio_mappings(struct aecp *aecp, int64_t now,
     stream_port = (struct avb_aem_desc_stream_port*) desc->ptr;
 
     if (stream_port->number_of_maps) {
-        pw_log_warn("Maps are statics here\n");
+        pw_log_warn("maps are statics for desc %d type %d", desc_index,
+            desc_type);
         reply_bad_arguments(aecp, m, len);
     }
 
@@ -117,6 +119,8 @@ int aecp_aem_cmd_add_audio_mappings(struct aecp *aecp, int64_t now,
         dyn_maps_st.formats =
             calloc(1, ntohs(stream_port->number_of_clusters) * sizeof(*formats));
         dyn_maps_st.format_slot_allocated =
+            calloc(1, ntohs(stream_port->number_of_clusters)* sizeof(bool));
+        dyn_maps_st.marked_for_removal =
             calloc(1, ntohs(stream_port->number_of_clusters)* sizeof(bool));
         dyn_maps_st.mapping_free_count = ntohs(stream_port->number_of_clusters);
         dyn_maps_st.mappings_max_count = ntohs(stream_port->number_of_clusters);

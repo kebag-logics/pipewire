@@ -205,6 +205,8 @@ struct aecp_aem_dynamic_audio_mappings_state {
     /* Check which of the slot is free*/
     bool *format_slot_allocated;
 
+    bool *marked_for_removal;
+
     /* What is the size of the maping max*/
     int mappings_max_count;
 

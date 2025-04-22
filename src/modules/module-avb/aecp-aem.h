@@ -158,7 +158,7 @@ struct avb_packet_aecp_aem_setget_signal_selector {
 	uint16_t reserved;
 } __attribute__ ((__packed__));
 
-struct avb_packet_aecp_aem_add_mappings {
+struct avb_packet_aecp_aem_addrem_mappings {
 	uint16_t descriptor_type;
 	uint16_t descriptor_id;
 	uint16_t number_of_mappings;
