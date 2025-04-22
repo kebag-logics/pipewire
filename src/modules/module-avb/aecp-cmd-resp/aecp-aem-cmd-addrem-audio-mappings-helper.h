@@ -41,6 +41,7 @@ static inline int aecp_aem_unsol_addrem_mapping(struct aecp *aecp, uint16_t type
         (dyn_maps_st.mappings_max_count - dyn_maps_st.mapping_free_count)
              * sizeof( struct avb_aem_audio_mapping_format);
 
+    pw_log_info("size of the buffer %u %u", dyn_maps_st.mappings_max_count , dyn_maps_st.mapping_free_count);
     if (len > sizeof(buf)) {
         pw_log_error("buffer space too small\n");
         spa_assert(0);

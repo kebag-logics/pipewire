@@ -42,7 +42,8 @@ static int find_and_remove_mapping(
         pw_log_info("updating for avb %ld\n", avl_mapping_idx);
         if (found_count == formats_count) {
             dyn_map_st->format_slot_allocated[avl_mapping_idx] = false;
-            dyn_map_st->mapping_free_count++;
+            if (dyn_map_st->marked_for_removal[avl_mapping_idx])
+                dyn_map_st->mapping_free_count++;
         }
         dyn_map_st->marked_for_removal[avl_mapping_idx] = false;
     }
