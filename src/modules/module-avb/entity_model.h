@@ -6,7 +6,6 @@
 #ifndef _ENTITY_MODEL_MILAN_H_
 #define _ENTITY_MODEL_MILAN_H_
 
-
 // Enables second configuration for debugging purposes
 #define CONFIGURATION_2_ENABLE 0
 // Disable talker
