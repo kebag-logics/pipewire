@@ -3,10 +3,10 @@
 #include "../aecp-aem-state.h"
 #include "../aecp-aem-descriptors.h"
 
+#include "aecp-aem-cmd-addrem-audio-mappings-helper.h"
 #include "aecp-aem-cmd-add-audio-mappings.h"
 #include "aecp-aem-helpers.h"
 #include "aecp-aem-types.h"
-#include "aecp-aem-unsol-helper.h"
 
 #define CHANNELS_FROM_MAPPINGS(x)   (((uint64_t)x>>22) & 0x3FF)
 
@@ -141,6 +141,8 @@ int aecp_aem_cmd_add_audio_mappings(struct aecp *aecp, int64_t now,
         }
         memcpy(format_slot, &formats[mapping_idx], sizeof(*format_slot));
     }
+
+    dyn_maps_st.base_desc.desc = desc;
     rc = aecp_aem_set_state_var(aecp, aecp->server->entity_id, ctrler_index,
                 aecp_aem_dynamic_audio_mappings, 0, &dyn_maps_st);
     if (rc) {
@@ -151,5 +153,6 @@ int aecp_aem_cmd_add_audio_mappings(struct aecp *aecp, int64_t now,
 
 int aecp_aem_unsol_add_audio_mappings(struct aecp *aecp, int64_t now)
 {
-    return 0;
+    return aecp_aem_unsol_addrem_mapping(aecp,
+                                    AVB_AECP_AEM_CMD_REMOVE_AUDIO_MAPPINGS);
 }

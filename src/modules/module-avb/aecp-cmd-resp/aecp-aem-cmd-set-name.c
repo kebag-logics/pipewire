@@ -204,11 +204,11 @@ int handle_unsol_set_name(struct aecp *aecp, int64_t now)
 	// TODO a more generic way of creating this.
 	for (ctrl_index = 0; ctrl_index < 16; ctrl_index++) {
 		rc = aecp_aem_get_state_var(aecp, target_id, aecp_aem_unsol_notif,
-			ctrl_index, &unsol);
+			    ctrl_index, &unsol);
 
-			pw_log_info("Retrieve value of %u %lx\n", ctrl_index,
-				unsol.ctrler_endity_id );
-
+        pw_log_info("Retrieve value of %u %lx\n", ctrl_index,
+            unsol.ctrler_endity_id );
+        
 		if (!unsol.is_registered) {
 			pw_log_info("Not registered\n");
 			continue;
