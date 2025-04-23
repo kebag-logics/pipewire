@@ -20,7 +20,7 @@ subprojects/libyaml
 subprojects/libcamera
 subprojects/webrtc-audio-processing
 
-pipewire-helpers/
+build_and_install.sh
 
 # Created by https://www.gitignore.io/api/vim
 
