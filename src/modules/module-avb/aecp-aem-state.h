@@ -205,7 +205,11 @@ struct aecp_aem_dynamic_audio_mappings_state {
     /* Check which of the slot is free*/
     bool *format_slot_allocated;
 
+    /** The vars is used when sending the unsollicited notification upon removal */
     bool *marked_for_removal;
+
+    /** The vars which is used when sending the unsollicted notification upon add */
+    bool *marked_as_added;
 
     /* What is the size of the maping max*/
     int mappings_max_count;

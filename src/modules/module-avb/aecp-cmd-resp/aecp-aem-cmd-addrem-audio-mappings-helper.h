@@ -20,6 +20,7 @@ static inline int aecp_aem_unsol_addrem_mapping(struct aecp *aecp, uint16_t type
         (struct avb_packet_aecp_aem_addrem_mappings *) p->payload;
     struct avb_aem_audio_mapping_format *formats;
     struct descriptor *desc;
+    uint16_t addremove_mappings = 0;
 
     size_t len;
     int rc;
@@ -37,9 +38,7 @@ static inline int aecp_aem_unsol_addrem_mapping(struct aecp *aecp, uint16_t type
     dyn_maps_st.base_desc.base_info.needs_update = false;
     memset(buf, 0, sizeof(buf));
 
-    len = sizeof(*p) + sizeof(*h) + sizeof(*amap) +
-        (dyn_maps_st.mappings_max_count - dyn_maps_st.mapping_free_count)
-             * sizeof( struct avb_aem_audio_mapping_format);
+    len = sizeof(*p) + sizeof(*h) + sizeof(*amap);
 
     pw_log_info("size of the buffer %u %u", dyn_maps_st.mappings_max_count , dyn_maps_st.mapping_free_count);
     if (len > sizeof(buf)) {
@@ -50,18 +49,31 @@ static inline int aecp_aem_unsol_addrem_mapping(struct aecp *aecp, uint16_t type
 
     for (size_t map_idx = 0; map_idx < (size_t)dyn_maps_st.mappings_max_count;
             map_idx++) {
-        if (dyn_maps_st.format_slot_allocated[map_idx]) {
-            memcpy(formats, &dyn_maps_st.formats[map_idx], sizeof(*formats));
-            formats++;
+        if (type == AVB_AECP_AEM_CMD_ADD_AUDIO_MAPPINGS) {
+            if (dyn_maps_st.marked_as_added[map_idx]) {
+                memcpy(formats, &dyn_maps_st.formats[map_idx], sizeof(*formats));
+                formats++;
+                dyn_maps_st.marked_as_added[map_idx] = false;
+                addremove_mappings++;
+            }
+        } else if (type == AVB_AECP_AEM_CMD_REMOVE_AUDIO_MAPPINGS) {
+            if (dyn_maps_st.marked_for_removal[map_idx]) {
+                memcpy(formats, &dyn_maps_st.formats[map_idx], sizeof(*formats));
+                formats++;
+                dyn_maps_st.marked_for_removal[map_idx] = false;
+                addremove_mappings++;
+            }
+        } else {
+            spa_assert(0);
         }
     }
+
+    len +=  addremove_mappings * sizeof( struct avb_aem_audio_mapping_format);
 
     desc = dyn_maps_st.base_desc.desc;
     amap->descriptor_id = htons(desc->index);
     amap->descriptor_type = htons(desc->type);
-    amap->number_of_mappings = htons( dyn_maps_st.mappings_max_count -
-                                        dyn_maps_st.mapping_free_count);
-
+    amap->number_of_mappings = htons(addremove_mappings);
     AVB_PACKET_AEM_SET_COMMAND_TYPE(p, type);
     rc = reply_unsolicited_notifications(aecp, &dyn_maps_st.base_desc.base_info,
             buf, len, false);

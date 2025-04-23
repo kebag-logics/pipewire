@@ -123,6 +123,9 @@ int aecp_aem_cmd_add_audio_mappings(struct aecp *aecp, int64_t now,
             calloc(1, ntohs(stream_port->number_of_clusters)* sizeof(bool));
         dyn_maps_st.marked_for_removal =
             calloc(1, ntohs(stream_port->number_of_clusters)* sizeof(bool));
+        dyn_maps_st.marked_as_added =
+            calloc(1, ntohs(stream_port->number_of_clusters)* sizeof(bool));
+
         dyn_maps_st.mapping_free_count = ntohs(stream_port->number_of_clusters);
         dyn_maps_st.mappings_max_count = ntohs(stream_port->number_of_clusters);
     }
@@ -140,6 +143,7 @@ int aecp_aem_cmd_add_audio_mappings(struct aecp *aecp, int64_t now,
         if (!format_slot) {
             return reply_bad_arguments(aecp, m, len);
         }
+        dyn_maps_st.marked_as_added[mapping_idx] = true;
         memcpy(format_slot, &formats[mapping_idx], sizeof(*format_slot));
     }
 

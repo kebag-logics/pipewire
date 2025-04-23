@@ -45,7 +45,6 @@ static int find_and_remove_mapping(
             if (dyn_map_st->marked_for_removal[avl_mapping_idx])
                 dyn_map_st->mapping_free_count++;
         }
-        dyn_map_st->marked_for_removal[avl_mapping_idx] = false;
     }
 
     return (found_count == formats_count ? 0 : -1);
