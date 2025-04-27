@@ -10,6 +10,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include "internal.h"
+#include "aecp-aem-mappings.h"
 
 struct aem_state_var_info {
     /** The name of the var for debug */
@@ -193,6 +194,24 @@ struct aecp_aem_counter_stream_output_state {
     uint32_t tu;
     uint32_t frame_tx;
 };
+struct aecp_aem_dynamic_audio_mappings_state {
+    /**
+     * To keep track of which desciptor has chaanged
+     */
+    struct aecp_aem_desc_base base_desc;
+    // TODO assume the aximum of 8 channels pwer stream
+    struct avb_aem_audio_mapping_format *formats;
+
+    /* Check which of the slot is free*/
+    bool *format_slot_allocated;
+
+    /* What is the size of the maping max*/
+    int mappings_max_count;
+
+    /* And the current usage*/
+    int mapping_free_count;
+};
+
 
 /**
  * The aecp_aem_desc_base inherites from the base
@@ -203,6 +222,7 @@ enum aecp_aem_lock_types {
 	aecp_aem_lock,
     aecp_aem_name,
     aecp_aem_clock_domain,
+    aecp_aem_dynamic_audio_mappings,
     aecp_aem_configuration,
     aecp_aem_control,
     aecp_aem_stream_format,
