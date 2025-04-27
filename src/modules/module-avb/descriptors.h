@@ -153,7 +153,7 @@ static inline void init_descriptors(struct server *server)
 
 	server_add_descriptor(server, AVB_AEM_DESC_CONTROL, 0,
 			sizeof(ctrl), &ctrl);
-
+#ifdef USE_MILAN
 	struct {
 		struct avb_aem_desc_audio_map desc;
 		struct avb_aem_audio_mapping_format maps[8];
@@ -173,6 +173,7 @@ static inline void init_descriptors(struct server *server)
 
 	server_add_descriptor(server, AVB_AEM_DESC_AUDIO_MAP, 0,
 		 sizeof(maps_input), &maps_input);
+#endif // USE_MILAN
 
 	struct {
 		struct avb_aem_desc_audio_map desc;
@@ -190,10 +191,13 @@ static inline void init_descriptors(struct server *server)
 		maps_output.maps[map_idx].mapping_cluster_offset  = htons(8+map_idx);
 		maps_output.maps[map_idx].mapping_stream_channel  = htons(8+map_idx);
 	}
-
+#ifdef USE_MILAN
+	server_add_descriptor(server, AVB_AEM_DESC_AUDIO_MAP, 0,
+		sizeof(maps_output), &maps_output);
+#else // USE_MILAN
 	server_add_descriptor(server, AVB_AEM_DESC_AUDIO_MAP, 1,
 		 sizeof(maps_output), &maps_output);
-
+#endif // USE_MILAN
 	struct avb_aem_desc_audio_cluster clusters[16];
 
 	for (uint32_t cluster_idx = 0; cluster_idx < 16; cluster_idx++) {
@@ -229,7 +233,7 @@ static inline void init_descriptors(struct server *server)
 		.base_control = htons(0),
 		.number_of_clusters = htons(8),
 		.base_cluster = htons(0),
-		.number_of_maps = htons(1),
+		.number_of_maps = htons(0),
 		.base_map = htons(0),
 	};
 
@@ -244,7 +248,7 @@ static inline void init_descriptors(struct server *server)
 		.number_of_clusters = htons(8),
 		.base_cluster = htons(8),
 		.number_of_maps = htons(1),
-		.base_map = htons(1),
+		.base_map = htons(0),
 	};
 
 	server_add_descriptor(server, AVB_AEM_DESC_STREAM_PORT_OUTPUT, 0,

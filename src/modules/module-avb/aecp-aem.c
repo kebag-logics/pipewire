@@ -24,6 +24,8 @@
 #include "aecp-cmd-resp/aecp-aem-cmd-get-name.h"
 #include "aecp-cmd-resp/aecp-aem-lock-entity.h"
 #include "aecp-cmd-resp/aecp-aem-cmd-set-clock-source.h"
+#include "aecp-cmd-resp/aecp-aem-cmd-add-audio-mappings.h"
+#include "aecp-cmd-resp/aecp-aem-cmd-remove-audio-mappings.h"
 #include "aecp-cmd-resp/aecp-aem-cmd-set-name.h"
 #include "aecp-cmd-resp/aecp-aem-cmd-get-counters.h"
 #include "aecp-cmd-resp/aecp-aem-lock-entity.h"
@@ -134,19 +136,6 @@ static int handle_get_audio_map(struct aecp *aecp, int64_t now,
 	return reply_not_implemented(aecp, m, len);
 }
 
-static int handle_add_audio_mappings(struct aecp *aecp, int64_t now,
-	 const void *m, int len)
-{
-	pw_log_warn("%s: +%d: has to be implemented\n", __func__, __LINE__);
-	return reply_not_implemented(aecp, m, len);
-}
-
-static int handle_remove_audio_mappings(struct aecp *aecp, int64_t now,
-	 const void *m, int len)
-{
-	pw_log_warn("%s: +%d: has to be implemented\n", __func__, __LINE__);
-	return reply_not_implemented(aecp, m, len);
-}
 
 static int handle_get_dynamic_info(struct aecp *aecp, int64_t now,
 	 const void *m, int len)
@@ -333,11 +322,14 @@ static const struct cmd_info cmd_info[] = {
 	AECP_AEM_HANDLE_CMD( AVB_AECP_AEM_CMD_GET_AUDIO_MAP, true,
 						"get-audio-map", handle_get_audio_map),
 
-	AECP_AEM_HANDLE_CMD( AVB_AECP_AEM_CMD_ADD_AUDIO_MAPPINGS, false,
-						"add-audio-mappings", handle_add_audio_mappings),
+	AECP_AEM_HANDLE_CMD_UNSOL(AVB_AECP_AEM_CMD_ADD_AUDIO_MAPPINGS, false,
+						"add-audio-mappings", aecp_aem_cmd_add_audio_mappings,
+						aecp_aem_unsol_add_audio_mappings),
 
-	AECP_AEM_HANDLE_CMD( AVB_AECP_AEM_CMD_REMOVE_AUDIO_MAPPINGS, false,
-						"remove-audio-mappings", handle_remove_audio_mappings),
+	AECP_AEM_HANDLE_CMD_UNSOL( AVB_AECP_AEM_CMD_REMOVE_AUDIO_MAPPINGS, false,
+						"remove-audio-mappings",
+						aecp_aem_cmd_remove_audio_mappings,
+						aecp_aem_unsol_remove_audio_mappings),
 
 	AECP_AEM_HANDLE_CMD( AVB_AECP_AEM_CMD_GET_VIDEO_MAP, true,
 						"get-video-map", NULL),

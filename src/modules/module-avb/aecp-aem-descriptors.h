@@ -8,6 +8,7 @@
 #define AVB_AECP_AEM_DESCRIPTORS_H
 
 #include "internal.h"
+#include "aecp-aem-mappings.h"
 
 /*
 * IEEE 1722.1-2021, Table 7-1 - Descriptor Types
@@ -156,15 +157,6 @@ struct avb_aem_desc_audio_cluster {
 	uint8_t  format;
 	uint8_t  aes3_data_type_ref;
 	uint16_t aes3_data_type;
-} __attribute__ ((__packed__));
-
-#define AVB_AEM_AUDIO_MAPPING_FORMAT_OFFSET (8)
-
-struct avb_aem_audio_mapping_format {
-	uint16_t mapping_stream_index;
-	uint16_t mapping_stream_channel;
-	uint16_t mapping_cluster_offset;
-	uint16_t mapping_cluster_channel;
 } __attribute__ ((__packed__));
 
 struct avb_aem_desc_audio_map {

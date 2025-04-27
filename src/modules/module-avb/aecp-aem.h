@@ -10,6 +10,7 @@
 #include "aecp.h"
 #include "aecp-cmd-resp/aecp-aem-types.h"
 #include "aecp-aem-counters.h"
+#include "aecp-aem-mappings.h"
 
 struct avb_packet_aecp_aem_acquire {
 	uint32_t flags;
@@ -156,6 +157,14 @@ struct avb_packet_aecp_aem_setget_signal_selector {
 	uint16_t signal_output;
 	uint16_t reserved;
 } __attribute__ ((__packed__));
+
+struct avb_packet_aecp_aem_addrem_mappings {
+	uint16_t descriptor_type;
+	uint16_t descriptor_id;
+	uint16_t number_of_mappings;
+	uint16_t reserved;
+	struct avb_aem_audio_mapping_format mappings[0];
+}__attribute__ ((__packed__));
 
 struct avb_packet_aecp_aem_setget_mixer {
 	uint16_t descriptor_type;

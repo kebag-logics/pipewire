@@ -55,6 +55,16 @@ static const struct aem_state_var_info milan_vars[] = {
 
     AECP_AEM_NEEDED_VAR(aecp_aem_counter_stream_output, "counter_stream_output",
          true, true, 1, sizeof(struct aecp_aem_counter_stream_output_state)),
+    /*
+     * Should be added auomatically, but for now everything is static,
+     * so for now just put the numbre of input stream port
+     * TODO: check fix it to be automatically added.a64l
+     * The number of mappings = audio cluster x stream input channels
+     * We mostly target Milan, so for now the input streams are the only one
+     * taken care of for the sake of simplicity.
+     */
+    AECP_AEM_NEEDED_VAR(aecp_aem_dynamic_audio_mappings, "dynamic-mappings", true, false, 1,
+        sizeof(struct aecp_aem_dynamic_audio_mappings_state)),
 
     AECP_AEM_NEEDED_VAR(aecp_aem_unsol_notif, "unsol_notif_recorded",false, true,
         16, sizeof(struct aecp_aem_unsol_notification_state)),
