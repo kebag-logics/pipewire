@@ -24,3 +24,5 @@ Then Hive Controller no. 1 displays a green lock symbol for the entity
 When The entity is selected in Hive Controller no. 2
     And "Identify Device (10s)" is selected from the context menu
 Then The Hive Controller no. 2 reports "Identify Entity failed: The AVDECC Entity has been locked by another AVDECC Controller."
+
+# TODO: Add tests for locked entity and negative tests: out of bounds, ADP multicast address

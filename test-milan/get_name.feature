@@ -19,4 +19,4 @@ Given the entity with descriptor type "ENTITY" and descriptor index "0" is onlin
 When the get_name command is sent with a correctly populated frame (descriptor_type=ENTITY2, descriptor_index=0, name_index=0)
 Then no response is expected
 
-# TODO: negative testing (out of bounds) ...
+# TODO: Add tests for locked entity and negative tests: out of bounds, ADP multicast address
