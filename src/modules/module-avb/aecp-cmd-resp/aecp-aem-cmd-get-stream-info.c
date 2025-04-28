@@ -21,7 +21,7 @@ int aecp_aem_cmd_get_stream_info(struct aecp *aecp, int64_t now,
     const struct avb_packet_aecp_aem *p = SPA_PTROFF(h, sizeof(*h), void);
     struct avb_packet_aecp_aem_setget_stream_info *sinf;
     // This is used to align the structure to 8 bytes
-    struct avb_packet_aecp_aem_setget_stream_info aligned_sinf;
+    struct avb_packet_aecp_aem_setget_stream_info aligned_sinf = {0};
     struct aecp_aem_stream_info_state sinf_state = {0};
     struct avb_ethernet_header *h_reply = (struct avb_ethernet_header *)buf;
     struct avb_packet_aecp_aem *p_reply = SPA_PTROFF(h_reply, sizeof(*h_reply),
@@ -69,10 +69,6 @@ int aecp_aem_cmd_get_stream_info(struct aecp *aecp, int64_t now,
     /* Prepapre the reply */
     memset(buf, 0, sizeof(buf));
     memcpy(buf, m, len);
-
-    /** Reset the structure, it was used before */
-    memset(&aligned_sinf, 0, sizeof(aligned_sinf));
-    sinf = (struct avb_packet_aecp_aem_setget_stream_info *)&aligned_sinf;
 
     // Milan v1.2 Clause 5.4.2.10 GET_STREAM_INFO
     if (desc_type == AVB_AEM_DESC_STREAM_INPUT) {
