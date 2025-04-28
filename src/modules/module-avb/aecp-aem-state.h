@@ -140,7 +140,12 @@ struct aecp_aem_stream_info_state {
      */
     bool saved_state;
     bool streaming_wait;
-    bool registering_failed;
+
+    // Milan v1.2 Clause 5.4.2.10 GET_STREAM_INFO called bound
+    bool connected;
+
+    // Milan v1.2 Clause 5.4.2.10 GET_STREAM_INFO called registering_failed
+    bool talker_failed;
     uint64_t stream_format;
     uint64_t stream_id;
     uint32_t msrp_accumulated_latency;

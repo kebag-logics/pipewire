@@ -18,6 +18,7 @@
 #include "aecp-cmd-resp/aecp-aem-available.h"
 #include "aecp-cmd-resp/aecp-aem-cmd-set-stream-format.h"
 #include "aecp-cmd-resp/aecp-aem-cmd-set-sampling-rate.h"
+#include "aecp-cmd-resp/aecp-aem-cmd-set-stream-info.h"
 #include "aecp-cmd-resp/aecp-aem-configuration.h"
 #include "aecp-cmd-resp/aecp-aem-descriptors.h"
 #include "aecp-cmd-resp/aecp-aem-get-avb-info.h"
@@ -26,6 +27,7 @@
 #include "aecp-cmd-resp/aecp-aem-cmd-set-clock-source.h"
 #include "aecp-cmd-resp/aecp-aem-cmd-set-name.h"
 #include "aecp-cmd-resp/aecp-aem-cmd-get-counters.h"
+#include "aecp-cmd-resp/aecp-aem-cmd-get-stream-info.h"
 #include "aecp-cmd-resp/aecp-aem-lock-entity.h"
 #include "aecp-cmd-resp/aecp-aem-cmd-set-control.h"
 #include "aecp-cmd-resp/aecp-aem-unsol-notifications.h"
@@ -66,19 +68,6 @@ static int handle_acquire_entity(struct aecp *aecp, int64_t now, const void *m, 
 static int handle_get_stream_format(struct aecp *aecp, int64_t now, const void *m, int len)
 {
 	// TODO
-	pw_log_warn("%s: +%d: has to be implemented\n", __func__, __LINE__);
-	return reply_not_implemented(aecp, m, len);
-}
-
-static int handle_set_stream_info(struct aecp *aecp, int64_t now, const void *m, int len)
-{
-	/* Milan v1.2 Clause 5.4.2.9 SET_STREAM_INFO */
-	return reply_not_implemented(aecp, m, len);
-}
-
-static int handle_get_stream_info(struct aecp *aecp, int64_t now, const void *m, int len)
-{
-	// TODO difference with the stream input or the stream output
 	pw_log_warn("%s: +%d: has to be implemented\n", __func__, __LINE__);
 	return reply_not_implemented(aecp, m, len);
 }
@@ -238,11 +227,12 @@ static const struct cmd_info cmd_info[] = {
 	AECP_AEM_HANDLE_CMD( AVB_AECP_AEM_CMD_GET_SENSOR_FORMAT, true,
 						"get-sensor-format", NULL),
 
-	AECP_AEM_HANDLE_CMD( AVB_AECP_AEM_CMD_SET_STREAM_INFO, false,
-						"set-stream-info", handle_set_stream_info),
+	AECP_AEM_HANDLE_CMD_UNSOL( AVB_AECP_AEM_CMD_SET_STREAM_INFO, false,
+						"set-stream-info", aecp_aem_cmd_set_stream_info,
+						aecp_aem_unsol_set_stream_info),
 
 	AECP_AEM_HANDLE_CMD( AVB_AECP_AEM_CMD_GET_STREAM_INFO, true,
-						"get-stream-info", handle_get_stream_info),
+						"get-stream-info", aecp_aem_cmd_get_stream_info),
 
 	AECP_AEM_HANDLE_CMD_UNSOL(AVB_AECP_AEM_CMD_SET_NAME, false,
 						"set-name", handle_cmd_set_name, handle_unsol_set_name),
