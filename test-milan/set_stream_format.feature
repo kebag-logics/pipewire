@@ -24,4 +24,4 @@ Then Hive Controller no. 1 reports the second stream format in the Current Strea
     And Hive Controller no. 2 reports the second stream format in the Stream Format dropdown menu
     And the AEM unsolicited responses counter in Hive Controller no. 2 is increased by 1
 
-# TODO: Add tests for locked entity, out of bound change of stream format, ...
+# TODO: Add tests for locked entity and negative tests: out of bounds, ADP multicast address
