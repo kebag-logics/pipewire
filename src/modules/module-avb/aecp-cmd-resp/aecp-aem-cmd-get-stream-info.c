@@ -27,6 +27,7 @@ int aecp_aem_cmd_get_stream_info(struct aecp *aecp, int64_t now,
          void);
 
     struct descriptor *desc;
+    struct avb_aem_desc_stream *desc_stream;
     uint16_t desc_index;
     uint16_t desc_type;
     uint16_t ctrl_data_length;
@@ -81,6 +82,11 @@ int aecp_aem_cmd_get_stream_info(struct aecp *aecp, int64_t now,
                 AVB_AEM_STREAM_INFO_GET_MASK(AVB_AEM_STREAM_INFO_FLAG_STREAMING_WAIT));
         }
     }
+    desc_stream = (struct avb_aem_desc_stream *)desc->ptr;
+
+    flags |= htonl(
+        AVB_AEM_STREAM_INFO_GET_MASK(AVB_AEM_STREAM_INFO_FLAG_STREAM_FORMAT_VALID));
+    sinf->stream_format = htobe64(desc_stream->current_format);
 
     /** TODO FIXME, this expects that the value is set to 0 when not used, and the correct
      * value when used */
@@ -132,13 +138,6 @@ int aecp_aem_cmd_get_stream_info(struct aecp *aecp, int64_t now,
             AVB_AEM_STREAM_INFO_GET_MASK(AVB_AEM_STREAM_INFO_FLAG_STREAM_ID_VALID));
         sinf->stream_id = htobe64(sinf_state.stream_id);
     }
-
-    if (sinf_state.stream_format) {
-        flags |= htonl(
-            AVB_AEM_STREAM_INFO_GET_MASK(AVB_AEM_STREAM_INFO_FLAG_STREAM_FORMAT_VALID));
-        sinf->stream_format = htobe64(sinf_state.stream_format);
-    }
-
 
     sinf->aem_stream_info_flags = flags;
 
