@@ -7,12 +7,27 @@
 
 #define AECP_AVB_VENDOR_UNIQUE_PROTOCOL_ID_MILAN (0x001BC50AC100ULL)
 
+
+/** These are hardcoded value for now */
+/* Milan V1.2 Table 5.20: GET_MILAN */
+#define AECP_MVU_GET_MILAN_INFO_PROTO_VERSION	(1)
+#define AECP_MVU_GET_MILAN_INFO_CERT_VERSION	(0x01020000)
+#define AECP_MVU_GET_MILAN_INFO_FLAGS			(0)
+
+
 // Milan Specification 1.2 Table 5.18
 #define AECP_MILAN_VENDOR_UNIQUE_GET_MILAN_INFO             (0x0000)
 #define AECP_MILAN_VENDOR_UNIQUE_SET_SYSTEM_UNIQUE_ID       (0x0001)
 #define AECP_MILAN_VENDOR_UNIQUE_GET_SYSTEM_UNIQUE_ID       (0x0002)
 #define AECP_MILAN_VENDOR_UNIQUE_SET_MEDIA_CLOCK_REF_INFO   (0x0003)
 #define AECP_MILAN_VENDOR_UNIQUE_GET_MEDIA_CLOCK_REF_INFO   (0x0004)
+
+
+struct avb_packet_mvu_get_milan_info {
+	uint32_t protocol_version;
+	uint32_t feature_flags;
+	uint32_t certification_version;
+} __attribute__ ((__packed__));
 
 #define AVB_PACKET_AECP_MVU_SET_MESSAGE_TYPE(p,v)	(&(p)->r = v)
 

@@ -35,7 +35,7 @@ struct avb_packet_aecp_header {
 #define AVB_PACKET_AECP_GET_MESSAGE_TYPE(p)		AVB_PACKET_GET_SUB1(&(p)->hdr)
 #define AVB_PACKET_AECP_GET_STATUS(p)			AVB_PACKET_GET_SUB2(&(p)->hdr)
 
-#define AECP_VENDOR_UNIQUE_PROTO_ID(p)        ((uint64_t)((p)->proto1 <<16) |  p->proto2);
+#define AECP_VENDOR_UNIQUE_PROTO_ID(p)        (((uint64_t)(p)->proto1) |  (uint64_t)(p)->proto2<<16);
 struct avb_aecp *avb_aecp_register(struct server *server);
 
 #endif /* AVB_AECP_H */
