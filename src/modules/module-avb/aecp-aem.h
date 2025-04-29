@@ -69,19 +69,6 @@ struct avb_packet_aecp_aem_setget_sensor_format {
 } __attribute__ ((__packed__));
 
 
-#define AVB_AEM_STREAM_INFO_FLAG_CLASS_B			(1u<<0)
-#define AVB_AEM_STREAM_INFO_FLAG_FAST_CONNECT			(1u<<1)
-#define AVB_AEM_STREAM_INFO_FLAG_SAVED_STATE			(1u<<2)
-#define AVB_AEM_STREAM_INFO_FLAG_STREAMING_WAIT			(1u<<3)
-#define AVB_AEM_STREAM_INFO_FLAG_ENCRYPTED_PDU			(1u<<4)
-#define AVB_AEM_STREAM_INFO_FLAG_STREAM_VLAN_ID_VALID		(1u<<25)
-#define AVB_AEM_STREAM_INFO_FLAG_CONNECTED			(1u<<26)
-#define AVB_AEM_STREAM_INFO_FLAG_MSRP_FAILURE_VALID		(1u<<27)
-#define AVB_AEM_STREAM_INFO_FLAG_STREAM_DEST_MAC_VALID		(1u<<28)
-#define AVB_AEM_STREAM_INFO_FLAG_MSRP_ACC_LAT_VALID		(1u<<29)
-#define AVB_AEM_STREAM_INFO_FLAG_STREAM_ID_VALID		(1u<<30)
-#define AVB_AEM_STREAM_INFO_FLAG_STREAM_FORMAT_VALID		(1u<<31)
-
 struct avb_packet_aecp_aem_setget_stream_info {
 	uint16_t descriptor_type;
 	uint16_t descriptor_index;
@@ -94,8 +81,24 @@ struct avb_packet_aecp_aem_setget_stream_info {
 	uint8_t reserved;
 	uint64_t msrp_failure_bridge_id;
 	uint16_t stream_vlan_id;
-	uint16_t reserved2;
-} __attribute__ ((__packed__));
+	union {
+		/** Milan V1.2 Figure 5.1 GET_STREAM_INFO */
+		struct {
+			uint16_t reserved2;
+			uint32_t flag_ex;
+			uint8_t pbsta:3;
+			uint8_t acmpsta:5;
+			uint8_t reserved3[3];
+		} __attribute__ ((__packed__)) milan;
+		struct {
+			uint16_t ip_flags;
+			uint8_t src_ip_addr[4];
+			uint8_t dest_ip_addr[4];
+		} __attribute__ ((__packed__)) avb;
+
+	} __attribute__ ((__packed__));
+};
+
 
 struct avb_packet_aecp_aem_setget_name {
 	uint16_t descriptor_type;

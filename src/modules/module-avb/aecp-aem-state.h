@@ -127,6 +127,39 @@ struct aecp_aem_stream_format_state {
     struct aecp_aem_desc_base base_desc;
 };
 
+
+/**
+ *  For Milan this part will only be used for the get_stream_info
+ */
+struct aecp_aem_stream_info_state {
+    struct aecp_aem_desc_base base_desc;
+
+    /**
+     *  For a stream output this represents the Presentation time offset PTO
+     *  as described in Milan v1.2 Clause 5.4.2.9 SET_STREAM_INFO
+     */
+    bool saved_state;
+    bool streaming_wait;
+
+    // Milan v1.2 Clause 5.4.2.10 GET_STREAM_INFO called bound
+    bool connected;
+
+    // Milan v1.2 Clause 5.4.2.10 GET_STREAM_INFO called registering_failed
+    bool talker_failed;
+    uint64_t stream_format;
+    uint64_t stream_id;
+    uint32_t msrp_accumulated_latency;
+    uint8_t stream_dest_mac[6];
+
+    uint8_t msrp_failure_code;
+    uint8_t reserved;
+    uint64_t msrp_failure_bridge_id;
+    uint16_t stream_vlan_id;
+    uint32_t flags_ex;
+    uint8_t pbsta:3;
+    uint8_t acmpsta:5;
+};
+
 /** To keep track of the unsolicited notifications */
 struct aecp_aem_clock_domain_state {
     struct aecp_aem_desc_base base_desc;
@@ -206,6 +239,7 @@ enum aecp_aem_lock_types {
     aecp_aem_configuration,
     aecp_aem_control,
     aecp_aem_stream_format,
+    aecp_aem_stream_info,
     aecp_aem_sampling_rate,
     aecp_aem_counter_avb_interface,
     aecp_aem_counter_clock_domain,

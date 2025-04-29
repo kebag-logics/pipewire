@@ -43,6 +43,9 @@ static const struct aem_state_var_info milan_vars[] = {
     AECP_AEM_NEEDED_VAR(aecp_aem_sampling_rate, "sampling_rate", true, false, 1,
         sizeof(struct aecp_aem_sampling_rate_state)),
 
+    AECP_AEM_NEEDED_VAR(aecp_aem_stream_info, "stream_info", true, false, 3,
+        sizeof(struct aecp_aem_stream_info_state)),
+
     AECP_AEM_NEEDED_VAR(aecp_aem_counter_avb_interface, "counter_avb_interface",
          true, true, 1, sizeof(struct aecp_aem_counter_avb_interface_state)),
 
