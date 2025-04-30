@@ -8,14 +8,17 @@
 #define AECP_AVB_VENDOR_UNIQUE_PROTOCOL_ID_MILAN (0x001BC50AC100ULL)
 
 
+/* Milan v1.2 Clause 5.4.3.2.1 protocol_id field */
+#define AECP_MVU_MILAN_VENDOR_UNIQUE	((uint64_t)0x1bc50ac100)
+
 /** These are hardcoded value for now */
-/* Milan V1.2 Table 5.20: GET_MILAN */
+/* Milan v1.2 Table 5.20: GET_MILAN */
 #define AECP_MVU_GET_MILAN_INFO_PROTO_VERSION	(1)
 #define AECP_MVU_GET_MILAN_INFO_CERT_VERSION	(0x01020000)
 #define AECP_MVU_GET_MILAN_INFO_FLAGS			(0)
 
 
-// Milan Specification 1.2 Table 5.18
+// Milan v1.2 Table 5.18
 #define AECP_MILAN_VENDOR_UNIQUE_GET_MILAN_INFO             (0x0000)
 #define AECP_MILAN_VENDOR_UNIQUE_SET_SYSTEM_UNIQUE_ID       (0x0001)
 #define AECP_MILAN_VENDOR_UNIQUE_GET_SYSTEM_UNIQUE_ID       (0x0002)
