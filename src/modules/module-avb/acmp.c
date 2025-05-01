@@ -92,323 +92,323 @@ struct listener_fsm_cmd {
 };
 
 /** Milan v1.2 5.5.3.5.3 */
-int handle_fsm_unbound_rcv_bind_rx_cmd_evt(struct server *acmp, void *m, size_t len,
-	int64_t now)
+int handle_fsm_unbound_rcv_bind_rx_cmd_evt(struct server *acmp,
+	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.4 */
-int handle_fsm_unbound_rcv_get_rx_state_evt(struct server *acmp, void *m, size_t len,
-	int64_t now)
+int handle_fsm_unbound_rcv_get_rx_state_evt(struct server *acmp,
+	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.5 */
-int handle_fsm_unbound_rcv_unbind_rx_cmd_evt(struct server *acmp, void *m, size_t len,
-	int64_t now)
+int handle_fsm_unbound_rcv_unbind_rx_cmd_evt(struct server *acmp,
+	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.6 */
-int handle_fsm_prb_w_avail_rcv_bind_rx_cmd_evt(struct server *acmp, void *m, size_t len,
-	int64_t now)
+int handle_fsm_prb_w_avail_rcv_bind_rx_cmd_evt(struct server *acmp,
+	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.7 */
-int handle_fsm_prb_w_avail_rcv_get_rx_state_evt(struct server *acmp, void *m, size_t len,
-	int64_t now)
+int handle_fsm_prb_w_avail_rcv_get_rx_state_evt(struct server *acmp,
+	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.8 */
-int handle_fsm_prb_w_avail_rcv_unbind_rx_cmd_evt(struct server *acmp, void *m, size_t len,
-	int64_t now)
+int handle_fsm_prb_w_avail_rcv_unbind_rx_cmd_evt(struct server *acmp,
+	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.9 */
-int handle_fsm_prb_w_avail_evt_tk_discovered_evt(struct server *acmp, void *m, size_t len,
+int handle_fsm_prb_w_avail_evt_tk_discovered_evt(struct server *acmp,struct fsm_state_listener *info, void *m, size_t len,
 	int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.10 */
-int handle_fsm_prb_w_delay_tmr_delay_evt(struct server *acmp, void *m, size_t len,
-	int64_t now)
+int handle_fsm_prb_w_delay_tmr_delay_evt(struct server *acmp,
+	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.11 */
-int handle_fsm_prb_w_delay_rcv_bind_rx_cmd_evt(struct server *acmp, void *m, size_t len,
-	int64_t now)
+int handle_fsm_prb_w_delay_rcv_bind_rx_cmd_evt(struct server *acmp,
+	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.12 */
-int handle_fsm_prb_w_delay_rcv_get_rx_state_evt(struct server *acmp, void *m, size_t len,
-	int64_t now)
+int handle_fsm_prb_w_delay_rcv_get_rx_state_evt(struct server *acmp,
+	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.13 */
-int handle_fsm_prb_w_delay_rcv_unbind_rx_cmd_evt(struct server *acmp, void *m, size_t len,
-	int64_t now)
+int handle_fsm_prb_w_delay_rcv_unbind_rx_cmd_evt(struct server *acmp,
+	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.14 */
-int handle_fsm_prb_w_delay_evt_tk_discovered_evt(struct server *acmp, void *m, size_t len,
-	int64_t now)
+int handle_fsm_prb_w_delay_evt_tk_discovered_evt(struct server *acmp,
+	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.15 */
-int handle_fsm_prb_w_delay_evt_tk_departed_evt(struct server *acmp, void *m, size_t len,
-	int64_t now)
+int handle_fsm_prb_w_delay_evt_tk_departed_evt(struct server *acmp,
+	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.16 */
-int handle_fsm_prb_w_resp_tmr_no_resp_evt(struct server *acmp, void *m, size_t len,
-	int64_t now)
+int handle_fsm_prb_w_resp_tmr_no_resp_evt(struct server *acmp,
+	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.17 */
-int handle_fsm_prb_w_resp_rcv_bind_rx_cmd_evt(struct server *acmp, void *m, size_t len,
-	int64_t now)
+int handle_fsm_prb_w_resp_rcv_bind_rx_cmd_evt(struct server *acmp,
+	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.18 */
-int handle_fsm_prb_w_resp_rcv_probe_tx_resp_evt(struct server *acmp, void *m, size_t len,
-	int64_t now)
+int handle_fsm_prb_w_resp_rcv_probe_tx_resp_evt(struct server *acmp,
+	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.19 */
-int handle_fsm_prb_w_resp_rcv_get_rx_state_evt(struct server *acmp, void *m, size_t len,
-	int64_t now)
+int handle_fsm_prb_w_resp_rcv_get_rx_state_evt(struct server *acmp,
+	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.20 */
-int handle_fsm_prb_w_resp_rcv_unbind_rx_cmd_evt(struct server *acmp, void *m, size_t len,
-	int64_t now)
+int handle_fsm_prb_w_resp_rcv_unbind_rx_cmd_evt(struct server *acmp,
+	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.21 */
-int handle_fsm_prb_w_resp_evt_tk_discovered_evt(struct server *acmp, void *m, size_t len,
-	int64_t now)
+int handle_fsm_prb_w_resp_evt_tk_discovered_evt(struct server *acmp,
+	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.22 */
-int handle_fsm_prb_w_resp_evt_tk_departed_evt(struct server *acmp, void *m, size_t len,
-	int64_t now)
+int handle_fsm_prb_w_resp_evt_tk_departed_evt(struct server *acmp,
+	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.23 */
-int handle_fsm_prb_w_resp2_tmr_no_resp_evt(struct server *acmp, void *m, size_t len,
-	int64_t now)
+int handle_fsm_prb_w_resp2_tmr_no_resp_evt(struct server *acmp,
+	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.24 */
-int handle_fsm_prb_w_resp2_rcv_bind_rx_cmd_evt(struct server *acmp, void *m, size_t len,
-	int64_t now)
+int handle_fsm_prb_w_resp2_rcv_bind_rx_cmd_evt(struct server *acmp,
+	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.25 */
-int handle_fsm_prb_w_resp2_rcv_probe_tx_resp_evt(struct server *acmp, void *m, size_t len,
-	int64_t now)
+int handle_fsm_prb_w_resp2_rcv_probe_tx_resp_evt(struct server *acmp,
+	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.26 */
-int handle_fsm_prb_w_resp2_rcv_get_rx_state_evt(struct server *acmp, void *m, size_t len,
-	int64_t now)
+int handle_fsm_prb_w_resp2_rcv_get_rx_state_evt(struct server *acmp,
+	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.27 */
-int handle_fsm_prb_w_resp2_rcv_unbind_rx_cmd_evt(struct server *acmp, void *m, size_t len,
-	int64_t now)
+int handle_fsm_prb_w_resp2_rcv_unbind_rx_cmd_evt(struct server *acmp,
+	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.28 */
-int handle_fsm_prb_w_resp2_evt_tk_discovered_evt(struct server *acmp, void *m, size_t len,
-	int64_t now)
+int handle_fsm_prb_w_resp2_evt_tk_discovered_evt(struct server *acmp,
+	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.29 */
-int handle_fsm_prb_w_resp2_evt_tk_departed_evt(struct server *acmp, void *m, size_t len,
-	int64_t now)
+int handle_fsm_prb_w_resp2_evt_tk_departed_evt(struct server *acmp,
+	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.30 */
-int handle_fsm_prb_w_retry_tmr_retry_evt(struct server *acmp, void *m, size_t len,
-	int64_t now)
+int handle_fsm_prb_w_retry_tmr_retry_evt(struct server *acmp,
+	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.31 */
-int handle_fsm_prb_w_retry_rcv_bind_rx_cmd_evt(struct server *acmp, void *m, size_t len,
-	int64_t now)
+int handle_fsm_prb_w_retry_rcv_bind_rx_cmd_evt(struct server *acmp,
+	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.32 */
-int handle_fsm_prb_w_retry_rcv_get_rx_state_evt(struct server *acmp, void *m, size_t len,
-	int64_t now)
+int handle_fsm_prb_w_retry_rcv_get_rx_state_evt(struct server *acmp,
+	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.33 */
-int handle_fsm_prb_w_retry_rcv_unbind_rx_cmd_evt(struct server *acmp, void *m, size_t len,
-	int64_t now)
+int handle_fsm_prb_w_retry_rcv_unbind_rx_cmd_evt(struct server *acmp,
+	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.34 */
-int handle_fsm_prb_w_retry_evt_tk_discovered_evt(struct server *acmp, void *m, size_t len,
-	int64_t now)
+int handle_fsm_prb_w_retry_evt_tk_discovered_evt(struct server *acmp,
+	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.35 */
-int handle_fsm_prb_w_retry_evt_tk_departed_evt(struct server *acmp, void *m, size_t len,
-	int64_t now)
+int handle_fsm_prb_w_retry_evt_tk_departed_evt(struct server *acmp,
+	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.36 */
-int handle_fsm_settled_no_rsv_tmr_no_tk_evt(struct server *acmp, void *m, size_t len,
-	int64_t now)
+int handle_fsm_settled_no_rsv_tmr_no_tk_evt(struct server *acmp,
+	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.37 */
-int handle_fsm_settled_no_rsv_rcv_bind_rx_cmd_evt(struct server *acmp, void *m, size_t len,
-	int64_t now)
+int handle_fsm_settled_no_rsv_rcv_bind_rx_cmd_evt(struct server *acmp,
+	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.38 */
-int handle_fsm_settled_no_rsv_rcv_get_rx_state_evt(struct server *acmp, void *m, size_t len,
-	int64_t now)
+int handle_fsm_settled_no_rsv_rcv_get_rx_state_evt(struct server *acmp,
+	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.39 */
-int handle_fsm_settled_no_rsv_rcv_unbind_rx_cmd_evt(struct server *acmp, void *m, size_t len,
-	int64_t now)
+int handle_fsm_settled_no_rsv_rcv_unbind_rx_cmd_evt(struct server *acmp,
+	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.40 */
-int handle_fsm_settled_no_rsv_evt_tk_discovered_evt(struct server *acmp, void *m, size_t len,
-	int64_t now)
+int handle_fsm_settled_no_rsv_evt_tk_discovered_evt(struct server *acmp,
+	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.41 */
-int handle_fsm_settled_no_rsv_evt_tk_departed_evt(struct server *acmp, void *m, size_t len,
-	int64_t now)
+int handle_fsm_settled_no_rsv_evt_tk_departed_evt(struct server *acmp,
+	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.42 */
-int handle_fsm_settled_no_rsv_evt_tk_registered_evt(struct server *acmp, void *m, size_t len,
-	int64_t now)
+int handle_fsm_settled_no_rsv_evt_tk_registered_evt(struct server *acmp,
+	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.43 */
-int handle_fsm_settled_rsv_ok_rcv_bind_rx_cmd_evt(struct server *acmp, void *m, size_t len,
-	int64_t now)
+int handle_fsm_settled_rsv_ok_rcv_bind_rx_cmd_evt(struct server *acmp,
+	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.44 */
-int handle_fsm_settled_rsv_ok_rcv_get_rx_state_evt(struct server *acmp, void *m, size_t len,
-	int64_t now)
+int handle_fsm_settled_rsv_ok_rcv_get_rx_state_evt(struct server *acmp,
+	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.45 */
-int handle_fsm_settled_rsv_ok_rcv_unbind_rx_cmd_evt(struct server *acmp, void *m, size_t len,
-	int64_t now)
+int handle_fsm_settled_rsv_ok_rcv_unbind_rx_cmd_evt(struct server *acmp,
+	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.46 */
-int handle_fsm_settled_rsv_ok_evt_tk_discovered_evt(struct server *acmp, void *m, size_t len,
-	int64_t now)
+int handle_fsm_settled_rsv_ok_evt_tk_discovered_evt(struct server *acmp,
+	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.47 */
-int handle_fsm_settled_rsv_ok_evt_tk_departed_evt(struct server *acmp, void *m, size_t len,
-	int64_t now)
+int handle_fsm_settled_rsv_ok_evt_tk_departed_evt(struct server *acmp,
+	 struct fsm_state_listener *info, void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.48 */
-int handle_fsm_settled_rsv_ok_evt_tk_unregistered_evt(struct server *acmp, void *m, size_t len,
-	int64_t now)
+int handle_fsm_settled_rsv_ok_evt_tk_unregistered_evt(struct server *acmp,
+	 struct fsm_state_listener *info, void *m, size_t len, int64_t now)
 {
 	return 0;
 }
@@ -954,7 +954,7 @@ static void check_timeout(struct acmp *acmp, uint64_t now, uint16_t type)
 			__assert(0);
 		}
 
-		cmd->state_handler(acmp, NULL, 0, now);
+		return cmd->state_handler(acmp, NULL, 0, now);
 #endif // USE_MILAN
 	}
 }
