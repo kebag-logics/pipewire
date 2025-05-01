@@ -134,7 +134,7 @@ int avb_mrp_parse_packet(struct avb_mrp *mrp, uint64_t now, const void *pkt, int
 				return -EPROTO;
 
 			if (v->lva)
-				info->attr_event(data, now, attr_type, AVB_MRP_EVENT_RX_LVA);
+				info->attr_event(data, now, attr_type, AVB_MRP_ATTRIBUTE_EVENT_LVA);
 
 			for (i = 0; i < num_values; i++) {
 				if (i % 3 == 0) {
@@ -536,6 +536,7 @@ void avb_mrp_attribute_rx_event(struct avb_mrp_attribute *attr, uint64_t now, ui
 		[AVB_MRP_ATTRIBUTE_EVENT_JOINMT] = AVB_MRP_EVENT_RX_JOINMT,
 		[AVB_MRP_ATTRIBUTE_EVENT_MT] = AVB_MRP_EVENT_RX_MT,
 		[AVB_MRP_ATTRIBUTE_EVENT_LV] = AVB_MRP_EVENT_RX_LV,
+		[AVB_MRP_ATTRIBUTE_EVENT_LVA] = AVB_MRP_EVENT_RX_LVA,
 	};
 	avb_mrp_attribute_update_state(attr, now, map[event]);
 }
