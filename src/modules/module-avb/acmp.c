@@ -11,6 +11,7 @@
 #include "msrp.h"
 #include "internal.h"
 #include "stream.h"
+#include "aecp-aem.h"
 
 static const uint8_t mac[6] = AVB_BROADCAST_MAC;
 
@@ -165,6 +166,8 @@ static int handle_connect_tx_response(struct acmp *acmp, uint64_t now, const voi
 	pending->size = SPA_MIN((int)pending->size, len);
 	memcpy(h, m, pending->size);
 
+	// In Milan, the BIND_RX_RESPONSE is sent on reception of the bind_rx_cmd
+#if !USE_MILAN 
 	reply = SPA_PTROFF(h, sizeof(*h), void);
 	reply->sequence_id = htons(pending->old_sequence_id);
 	AVB_PACKET_ACMP_SET_MESSAGE_TYPE(reply, AVB_ACMP_MESSAGE_TYPE_CONNECT_RX_RESPONSE);
@@ -181,6 +184,7 @@ static int handle_connect_tx_response(struct acmp *acmp, uint64_t now, const voi
 	res = avb_server_send_packet(server, h->dest, AVB_TSN_ETH, h, pending->size);
 
 	pending_free(acmp, pending);
+#endif
 
 	return res;
 }
@@ -257,22 +261,58 @@ static int handle_disconnect_tx_response(struct acmp *acmp, uint64_t now, const 
 	return res;
 }
 
+/* IEEE 1722.1-2021, Sec. 8.1.1. Connecting a Stream */
+/* Milan v1.2, Sec. 5.5.2.4 Controller Bind */
 static int handle_connect_rx_command(struct acmp *acmp, uint64_t now, const void *m, int len)
 {
 	struct server *server = acmp->server;
 	struct avb_ethernet_header *h;
 	const struct avb_packet_acmp *p = SPA_PTROFF(m, sizeof(*h), void);
 	struct avb_packet_acmp *cmd;
+	struct avb_packet_acmp *reply;
+	int res;
+	AVB_ACMP_FLAGS flags;
 
 	if (be64toh(p->listener_guid) != server->entity_id)
 		return 0;
 
+	// TODO: Check if entity is locked and respond with CONTROLLER_NOT_AUTHORIZED
+
+	// Send BIND_RX_RESPONSE
+#if USE_MILAN
+	reply = SPA_PTROFF(h, sizeof(*h), void);
+	reply->sequence_id = htons(p->sequence_id);
+	AVB_PACKET_ACMP_SET_MESSAGE_TYPE(reply, AVB_ACMP_MESSAGE_TYPE_CONNECT_RX_RESPONSE);
+	AVB_PACKET_ACMP_SET_STATUS(reply, AVB_ACMP_STATUS_SUCCESS);
+
+	reply->connection_count = htons(1);
+	// Set flags
+	flags.value = htons(p->flags);
+	flags.bits.fast_connect = 0;
+	flags.bits.srp_registration_failed = 0;
+	reply->flags = htons(flags.value);
+	
+	res = avb_server_send_packet(server, h->dest, AVB_TSN_ETH, h, len);
+#endif
+
+#if USE_MILAN
+	// Start ADP Discovery?
 	h = pending_new(acmp, PENDING_TALKER, now,
-			AVB_ACMP_TIMEOUT_CONNECT_TX_COMMAND_MS, m, len);
+		AVB_MILAN_ACMP_TIMEOUT_BIND_RX_COMMAND_MS, m, len);
 	if (h == NULL)
-		return -errno;
+	return -errno;
 
 	cmd = SPA_PTROFF(h, sizeof(*h), void);
+#else
+	h = pending_new(acmp, PENDING_TALKER, now,
+		AVB_ACMP_TIMEOUT_CONNECT_TX_COMMAND_MS, m, len);
+	if (h == NULL)
+	return -errno;
+
+	cmd = SPA_PTROFF(h, sizeof(*h), void);
+#endif
+	
+	// TODO: Continue here
 	AVB_PACKET_ACMP_SET_MESSAGE_TYPE(cmd, AVB_ACMP_MESSAGE_TYPE_CONNECT_TX_COMMAND);
 	AVB_PACKET_ACMP_SET_STATUS(cmd, AVB_ACMP_STATUS_SUCCESS);
 
