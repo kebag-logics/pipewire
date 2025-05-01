@@ -83,4 +83,6 @@ struct avb_packet_adp {
 struct avb_adp *avb_adp_register(struct server *server);
 void avb_adp_unregister(struct avb_adp *adp);
 
+int avb_adp_get)(struct avb_adp *adp);
+
 #endif /* AVB_ADP_H */
