@@ -351,6 +351,19 @@ struct avb_adp *avb_adp_register(struct server *server)
 	return (struct avb_adp*)adp;
 }
 
+int avb_adp_find_existing(struct server *server, uint64_t id)
+{
+	struct adp *adp = (struct adp*) server->adp;
+
+	struct entity *entity = find_entity_by_id(adp, id);
+	if (entity) {
+		pw_log_info("entity id 0x%lx found\n", id);
+		return 0;
+	}
+
+	return -1;
+}
+
 void avb_adp_unregister(struct avb_adp *adp)
 {
 	adp_destroy(adp);
