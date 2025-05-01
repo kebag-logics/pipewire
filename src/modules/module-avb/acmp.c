@@ -30,6 +30,15 @@ struct pending {
 	size_t size;
 	void *ptr;
 };
+struct fsm_state_talker {
+	struct spa_list link;
+
+	uint64_t stream_id;
+	enum milan_acmp_talker_sta current_state;
+	int64_t timeout;
+	size_t size;
+	void *ptr;
+};
 
 struct fsm_binding_parameters {
 	uint32_t status;
@@ -78,7 +87,6 @@ struct acmp {
 	uint16_t sequence_id[3];
 
 };
-
 
 static struct fsm_state_listener *acmp_fsm_find(struct acmp *acmp, int type, uint64_t id)
 {
@@ -843,6 +851,20 @@ static const struct listener_fsm_cmd *cmd_listeners_states[MILAN_ACMP_LISTENER_S
 
 #endif // USE_MILAN
 
+static void *stream_talker_fsm_new(struct acmp *acmp, uint32_t type, uint64_t now, uint32_t timeout_ms,
+	const void *m, size_t size)
+{
+	struct fsm_state_talker *p;
+
+	p = calloc(1, sizeof(*p) + size);
+	if (p == NULL)
+		return NULL;
+
+	p->timeout = now + (timeout_ms * SPA_NSEC_PER_MSEC);
+	p->size = size;
+
+	spa_list_append(&acmp->stream_fsm[type], &p->link);
+}
 
 static void *stream_listener_fsm_new(struct acmp *acmp, uint32_t type)
 {
@@ -940,6 +962,7 @@ static int handle_connect_tx_command(struct acmp *acmp, uint64_t now, const void
 	int status = AVB_ACMP_STATUS_SUCCESS;
 	struct stream *stream;
 
+#ifndef USE_MILAN
 	if (be64toh(p->talker_guid) != server->entity_id)
 		return 0;
 
@@ -950,6 +973,8 @@ static int handle_connect_tx_command(struct acmp *acmp, uint64_t now, const void
 		status = AVB_ACMP_STATUS_TALKER_NO_STREAM_INDEX;
 		goto done;
 	}
+
+	// Milan V1.2 5.5.4.1
 
 	AVB_PACKET_ACMP_SET_MESSAGE_TYPE(reply, AVB_ACMP_MESSAGE_TYPE_CONNECT_TX_RESPONSE);
 	reply->stream_id = htobe64(stream->id);
@@ -963,6 +988,42 @@ static int handle_connect_tx_command(struct acmp *acmp, uint64_t now, const void
 done:
 	AVB_PACKET_ACMP_SET_STATUS(reply, status);
 	return avb_server_send_packet(server, h->dest, AVB_TSN_ETH, buf, len);
+#else
+	uint64_t talker_guid = p->talker_guid;
+	uint16_t talker_unique_id = reply->talker_unique_id;
+	uint16_t flags = ntohs(reply->flags);
+
+	if (talker_guid != server->entity_id)
+		return 0;
+
+	memcpy(buf, m, len);
+	stream = server_find_stream(server, SPA_DIRECTION_OUTPUT,
+		talker_unique_id);
+
+	AVB_PACKET_ACMP_SET_MESSAGE_TYPE(reply, AVB_ACMP_MESSAGE_TYPE_CONNECT_TX_RESPONSE);
+	if (stream == NULL) {
+		status = AVB_ACMP_STATUS_TALKER_UNKNOWN_ID;
+		goto done;
+	}
+
+	// Milan V1.2 5.5.4.1 TODO refactor attach steram top OUTTPUT STREAM desc
+	// For now we have only one interface so that's fine.
+	reply->stream_id = htobe64(stream->id);
+	if (stream_activate(stream, now)) {
+		status = AVB_ACMP_STATUS_TALKER_DEST_MAC_FAIL;
+	}
+
+	memcpy(reply->stream_dest_mac, stream->addr, 6);
+	reply->connection_count = htons(0);
+	flags &= ~AVB_MILAN_ACMP_FLAGS_SRP_REGISTRATION_FAILED;
+	reply->flags = htons(flags);
+	reply->stream_vlan_id = htons(stream->vlan_id);
+
+done:
+	AVB_PACKET_ACMP_SET_STATUS(reply, status);
+	return avb_server_send_packet(server, h->dest, AVB_TSN_ETH, buf, len);
+
+#endif // USE_MILAN
 }
 
 /* IEEE 1722.1-2021, Sec. 8.1.1. Connecting a Stream */
