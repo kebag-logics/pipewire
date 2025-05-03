@@ -161,12 +161,12 @@ int handle_fsm_unbound_rcv_bind_rx_cmd_evt(struct acmp *acmp, struct fsm_state_l
 	pw_log_info("UNBOUND: 6. Save a copy of PROBE_TX_COMMAND");
 
 	/* 7. Set TMR_NO_RESP timer to 200ms */
-	pw_log_info("UNBOUND: Set TMR_NO_RESP to 200ms");
+	pw_log_info("UNBOUND: 7. Set TMR_NO_RESP to 200ms");
 	info->timeout = now + 200 * SPA_NSEC_PER_MSEC;
 
 	/* TODO: 8. Set the probing status */
-	pw_log_info("UNBOUND: 8. Set the probing status");
-	info->probing_status = AVB_MILAN_ACMP_STATUS_PROBING_ACTIVE;
+	// pw_log_info("UNBOUND: 8. Set the probing status");
+	// info->probing_status = AVB_MILAN_ACMP_STATUS_PROBING_ACTIVE;
 
 	return 0;
 }
@@ -487,8 +487,9 @@ int handle_fsm_settled_rsv_ok_evt_tk_unregistered_evt(struct acmp *acmp,
 }
 
 static const struct listener_fsm_cmd listener_unbound[AECP_MILAN_ACMP_EVT_MAX] = {
+	/* Milan v1.2, Sec 5.5.3.5.3 */
     [AECP_MILAN_ACMP_EVT_RCV_BIND_RX_CMD] = {
-		.state_handler = handle_fsm_unbound_rcv_bind_rx_cmd_evt }, // 5.5.3.5.3
+		.state_handler = handle_fsm_unbound_rcv_bind_rx_cmd_evt },
 
     [AECP_MILAN_ACMP_EVT_RCV_GET_RX_STATE] = {
 		.state_handler = handle_fsm_unbound_rcv_get_rx_state_evt}, // 5.5.3.5.4
@@ -1098,8 +1099,8 @@ static void check_timeout(struct acmp *acmp, uint64_t now, uint16_t type)
 
 		switch (p->current_state) {
 			case MILAN_ACMP_LISTENER_STA_UNBOUND:
-				pw_log_info("Unbound: Milan taking off!");
-				evt = AECP_MILAN_ACMP_EVT_RCV_BIND_RX_CMD;
+				pw_log_info("TIMER: Milan taking off!");
+				evt = AECP_MILAN_ACMP_EVT_TMR_NO_RESP;
 			break;
 			case MILAN_ACMP_LISTENER_STA_PRB_W_DELAY:
 				pw_log_warn("PRB_W_DELAY waiting more\n");
