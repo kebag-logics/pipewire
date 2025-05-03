@@ -92,7 +92,7 @@ int handle_unsol_set_clock_source(struct aecp *aecp, int64_t now)
     struct aecp_aem_clock_domain_state clk_dmn_state = {0};
     struct avb_aem_desc_clock_domain* dclk_domain;
 
-    uint16_t target_id = aecp->server->entity_id;
+    uint64_t target_id = aecp->server->entity_id;
     size_t len;
     int rc;
 
