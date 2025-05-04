@@ -366,9 +366,9 @@ int handle_fsm_prb_w_resp_rcv_probe_tx_resp_evt(struct acmp *acmp,
 	
 	/* TODO: 4. Initiate SRP reservation and  start listening for stream_packets */
 	
-	/* 4. Start a 10s timer TMR_NO_TK */
+	/* TODO: 4. Start a 10s timer TMR_NO_TK */
 	pw_log_info("4. Start a 10s timer TMR_NO_TK");
-	info->timeout = now + 10 * SPA_NSEC_PER_SEC;
+	// info->timeout = now + 10 * SPA_NSEC_PER_SEC;
 
 	/* 4. Set the Probing status to PROBING_COMPLETED and ACMP status to 0 */
 	pw_log_info("4. Set the Probing status to PROBING_COMPLETED and ACMP status to 0");
@@ -543,10 +543,15 @@ int handle_fsm_settled_no_rsv_evt_tk_departed_evt(struct acmp *acmp,
 	return 0;
 }
 
-/** Milan v1.2 5.5.3.5.42 */
+/** Milan v1.2, Sec. 5.5.3.5.42 */
 int handle_fsm_settled_no_rsv_evt_tk_registered_evt(struct acmp *acmp,
 	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
-{
+{	
+	// Check for event
+	/* 1. Clear the TMR_NO_TK timer. */
+		// Done by design
+	/* 2. Go to the SETTLED_RSV_OK state. */
+	info->current_state = MILAN_ACMP_LISTENER_STA_SETTLED_RSV_OK;
 	return 0;
 }
 
