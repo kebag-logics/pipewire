@@ -315,7 +315,8 @@ int handle_fsm_prb_w_resp_rcv_probe_tx_resp_evt(struct acmp *acmp,
 	struct server *server = acmp->server;
 	const struct avb_ethernet_header *h = m;
 	const struct avb_packet_acmp *p = SPA_PTROFF(m, sizeof(*h), void);
-	struct avb_packet_acmp *reply = SPA_PTROFF(h, sizeof(*h), void);
+	// struct avb_packet_acmp *reply = SPA_PTROFF(h, sizeof(*h), void);
+	struct stream *stream;
 	uint16_t flags = info->flags;
 	uint8_t res;
 
@@ -364,7 +365,16 @@ int handle_fsm_prb_w_resp_rcv_probe_tx_resp_evt(struct acmp *acmp,
 	memcpy(info->binding_parameters.stream_dest_mac, p->stream_dest_mac, 6);
 	info->binding_parameters.stream_vlan_id = p->stream_vlan_id;
 	
-	/* TODO: 4. Initiate SRP reservation and  start listening for stream_packets */
+	/* 4. Initiate SRP reservation and  start listening for stream_packets */
+	// TODO: Check this
+	stream = server_find_stream(server, SPA_DIRECTION_INPUT,
+		ntohs(p->listener_unique_id));
+	if (stream == NULL)
+		return 0;
+
+	stream->peer_id = be64toh(p->stream_id);
+	memcpy(stream->addr, p->stream_dest_mac, 6);
+	stream_activate(stream, now);
 	
 	/* TODO: 4. Start a 10s timer TMR_NO_TK */
 	pw_log_info("4. Start a 10s timer TMR_NO_TK");
@@ -927,7 +937,7 @@ static int handle_connect_tx_response(struct acmp *acmp, uint64_t now, const voi
 	 
 		 // Initialize the new FSM state
 		 fsm->binding_parameters.stream_id = be64toh(resp->stream_id);
-		 // TODO: This state is only valid for the demo uses cas
+		 // TODO: This state is only valid for the demo uses case
 		 fsm->current_state = MILAN_ACMP_LISTENER_STA_PRB_W_RESP;
 		 fsm->timeout = LONG_MAX;
 		 fsm->size = 0;
