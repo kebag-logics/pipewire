@@ -43,7 +43,7 @@ struct fsm_binding_parameters {
 	uint16_t sequence_id;
 
 	uint64_t stream_id;
-	uint16_t stream_dest_mac;
+	char stream_dest_mac[6];
 	uint8_t stream_vlan_id;
 };
 
@@ -55,8 +55,10 @@ struct fsm_state_listener {
 	enum milan_acmp_listener_sta current_state;
 	int64_t timeout;
 	size_t size;
-	AVB_ACMP_FLAGS flags;
+	uint16_t flags;
 	uint8_t probing_status;
+	uint16_t connection_count;
+	uint8_t STREAMING_WAIT;
 	uint8_t buf[2048];
 
 };
@@ -82,7 +84,7 @@ static struct fsm_state_listener *acmp_fsm_find(struct acmp *acmp, int type, uin
 {
 	struct fsm_state_listener *fsm;
 	spa_list_for_each(fsm, &acmp->stream_fsm[type], link) {
-		if (fsm->stream_id == id )
+		if (fsm->binding_parameters.stream_id == id )
 			return fsm;
 	}
 
@@ -125,7 +127,7 @@ int handle_fsm_unbound_rcv_bind_rx_cmd_evt(struct acmp *acmp, struct fsm_state_l
 	const struct avb_ethernet_header *h = m;
 	const struct avb_packet_acmp *p = SPA_PTROFF(m, sizeof(*h), void);
 	struct avb_packet_acmp *reply = SPA_PTROFF(h, sizeof(*h), void);
-	AVB_ACMP_FLAGS flags = info->flags;
+	uint16_t flags = 0;
 	uint8_t res;
 
 
@@ -140,24 +142,24 @@ int handle_fsm_unbound_rcv_bind_rx_cmd_evt(struct acmp *acmp, struct fsm_state_l
 	}
 	/* TODO: 2. Update binding parameters */
 	pw_log_info("UNBOUND: 2. Update binding parameters");
-	info->binding_parameters.controller_entity_id = htons(p->controller_guid);
-	info->binding_parameters.talker_entity_id = htons(p->talker_guid);
+	info->binding_parameters.controller_entity_id = be64toh(p->controller_guid);
+	info->binding_parameters.talker_entity_id = be64toh(p->talker_guid);
 	info->binding_parameters.talker_unique_id = htons(p->talker_unique_id);
-	// TODO: Figure out a way for the flags
-	// info->flags.bits.streaming_wait = htons(p->flags.bits.streaming_wait);
+	flags = p->flags;
 
 	/* 3. Send a BIND_RX_RESPONSE */
 	pw_log_info("UNBOUND: 3. Send BIND_RX_RESPONSE");
 	AVB_PACKET_ACMP_SET_MESSAGE_TYPE(reply, AVB_ACMP_MESSAGE_TYPE_CONNECT_RX_RESPONSE);
 	AVB_PACKET_ACMP_SET_STATUS(reply, AVB_ACMP_STATUS_SUCCESS);
 
-	reply->connection_count = htons(1);
+	info->connection_count = 1;
+	
+	reply->connection_count = htons(info->connection_count);
 
 	// Set flags
-	flags.value = htons(p->flags);
-	flags.bits.fast_connect = 0;
-	flags.bits.srp_registration_failed = 0;
-	reply->flags = htons(flags.value);
+	flags &= ~AVB_AEM_STREAM_INFO_FLAG_FLAG_FAST_CONNECT;
+	flags &= ~AVB_AEM_STREAM_INFO_FLAG_FLAG_SRP_REGISTRATION_FAILED;
+	reply->flags = htons(flags);
 
 	res = avb_server_send_packet(server, h->dest, AVB_TSN_ETH, h, len);
 
@@ -167,7 +169,7 @@ int handle_fsm_unbound_rcv_bind_rx_cmd_evt(struct acmp *acmp, struct fsm_state_l
 
 	/* TODO: 4. Start ADP Discovery state machine */
 	pw_log_info("UNBOUND: 4. Start ADP Discovery state machine");
-		/* TODO: ADP already running. Check details*/
+		/* TODO: ADP already running. Check details */
 
 	/* 5. Send PROBE_TX_COMMAND */
 	pw_log_info("UNBOUND: 5. Send PROBE_TX_COMMAND");
@@ -175,13 +177,17 @@ int handle_fsm_unbound_rcv_bind_rx_cmd_evt(struct acmp *acmp, struct fsm_state_l
 	AVB_PACKET_ACMP_SET_STATUS(reply, AVB_ACMP_STATUS_SUCCESS);
 	// TODO: Global sequence id counter?
 	// TODO: Replace magic numbers
-	reply->sequence_id = htons(666);
-	reply->connection_count = htons(0);
-	flags.value = 0;
-	flags.bits.fast_connect = htons(1);
-	flags.bits.streaming_wait = htons(0);
-	flags.bits.srp_registration_failed = htons(0);
-	reply->flags = htons(flags.value);
+	info->binding_parameters.sequence_id = 0x29a;
+	info->connection_count = 0;
+
+	reply->sequence_id = htons(info->binding_parameters.sequence_id);
+	reply->connection_count = htons(info->connection_count);
+	flags = 0;
+	// Set FAST_CONNECT to 1
+	flags |= AVB_AEM_STREAM_INFO_FLAG_FLAG_FAST_CONNECT;
+	// Set STREAMING_WAIT to 0
+	flags &= ~AVB_AEM_STREAM_INFO_FLAG_FLAG_STREAMING_WAIT;
+	reply->flags = htons(flags);
 	res = avb_server_send_packet(server, h->dest, AVB_TSN_ETH, h, len);
 
 	/* TODO: 6. Save a copy of PROBE_TX_COMMAND */
@@ -193,7 +199,7 @@ int handle_fsm_unbound_rcv_bind_rx_cmd_evt(struct acmp *acmp, struct fsm_state_l
 	// info->timeout = now + 200 * SPA_NSEC_PER_MSEC;
 
 	/* TODO: 8. Set the probing status */
-	// pw_log_info("UNBOUND: 8. Set the probing status");
+	pw_log_info("UNBOUND: 8. Set the probing status");
 	// info->probing_status = AVB_MILAN_ACMP_STATUS_PROBING_ACTIVE;
 
 	/* 9. Go to the PRB_W_RESP state */
@@ -310,31 +316,52 @@ int handle_fsm_prb_w_resp_rcv_probe_tx_resp_evt(struct acmp *acmp,
 	const struct avb_ethernet_header *h = m;
 	const struct avb_packet_acmp *p = SPA_PTROFF(m, sizeof(*h), void);
 	struct avb_packet_acmp *reply = SPA_PTROFF(h, sizeof(*h), void);
-	AVB_ACMP_FLAGS flags = info->flags;
+	uint16_t flags = info->flags;
 	uint8_t res;
 
 	/* 1. Check controller_entity_id, talker_entity_id, talker_unique_id and sequence_id of sent PROBE_TX_COMMAND*/
 	pw_log_info("1. Check controller_entity_id, talker_entity_id, talker_unique_id and sequence_id");
-	// TODO: Add debug messages
-	if (info->binding_parameters.controller_entity_id != p->controller_guid)
+
+	uint64_t rcvd_controller_entity_id = be64toh(p->controller_guid);
+	uint64_t rcvd_talker_entitiy_id = be64toh(p->talker_guid);
+	uint16_t rcvd_talker_unique_id = ntohs(p->talker_unique_id);
+	uint16_t rcvd_sequence_id = ntohs(p->sequence_id);
+
+	if (info->binding_parameters.controller_entity_id != rcvd_controller_entity_id){
+		pw_log_info("Controller entity IDs not matching. Received: 0x%" PRIx64 ", expected: 0x%" PRIx64,
+			rcvd_controller_entity_id, info->binding_parameters.controller_entity_id);
+		spa_assert(0);
 		return 0;
-	if (info->binding_parameters.talker_entity_id != p->talker_guid)
+	}
+	if (info->binding_parameters.talker_entity_id != rcvd_talker_entitiy_id){
+		pw_log_info("Talker entity IDs not matching. Received: 0x%" PRIx64 ", expected: 0x%" PRIx64,
+			rcvd_talker_entitiy_id, info->binding_parameters.talker_entity_id);
+		spa_assert(0);
 		return 0;
-	if (info->binding_parameters.talker_unique_id != p->talker_unique_id)
+	}
+	if (info->binding_parameters.talker_unique_id != rcvd_talker_unique_id){
+		pw_log_info("Talker unique IDs not matching. Received: 0x%" PRIx16 ", expected: 0x%" PRIx16,
+			rcvd_talker_unique_id, info->binding_parameters.talker_unique_id);
+		spa_assert(0);
 		return 0;
-	if (info->binding_parameters.sequence_id != p->sequence_id)
+	}
+	if (info->binding_parameters.sequence_id != rcvd_sequence_id){
+		pw_log_info("Sequence IDs not matching. Received: 0x%" PRIx16 ", expected: 0x%" PRIx16,
+			rcvd_sequence_id, info->binding_parameters.sequence_id);
+		spa_assert(0);
 		return 0;
+	}
 
 	/* TODO: 2. Stop the TMR_NO_RESP timer */
-	// Done by design
+	pw_log_info("2. Stop the TMR_NO_RESP timer");
+		// Done by design
 
 	/* TODO: 3. If STATUS!=SUCCESS then set TMR_RETRY to 4s. Set the ACMP status to the value of status and go to the PRB_W_RETRY state */
-
 	
 	/* 4. Note stream_id, stream_dest_mac, stream_vlan_id. */
 	pw_log_info("4. Note stream_id, stream_dest_mac, stream_vlan_id.");
 	info->binding_parameters.stream_id = p->stream_id;
-	info->binding_parameters.stream_dest_mac = p->stream_dest_mac;
+	memcpy(info->binding_parameters.stream_dest_mac, p->stream_dest_mac, 6);
 	info->binding_parameters.stream_vlan_id = p->stream_vlan_id;
 	
 	/* TODO: 4. Initiate SRP reservation and  start listening for stream_packets */
@@ -345,13 +372,13 @@ int handle_fsm_prb_w_resp_rcv_probe_tx_resp_evt(struct acmp *acmp,
 
 	/* 4. Set the Probing status to PROBING_COMPLETED and ACMP status to 0 */
 	pw_log_info("4. Set the Probing status to PROBING_COMPLETED and ACMP status to 0");
+	// TODO: ACMP Status
 	info->probing_status = AVB_MILAN_ACMP_STATUS_PROBING_COMPLETED;
 
 	/* 4. Go to the SETTLED_NO_RSV state */
 	pw_log_info("4. Go to the SETTLED_NO_RSV state");
 	info->current_state = MILAN_ACMP_LISTENER_STA_SETTLED_NO_RSV;
 
-	spa_assert(0);
 	return 0;
 }
 
@@ -876,7 +903,7 @@ static int handle_connect_tx_response(struct acmp *acmp, uint64_t now, const voi
 
 #if USE_MILAN
 	pw_log_info("HANDLE connect_tx_resp: len: %i", len);
-	AVB_ACMP_FLAGS flags;
+	uint16_t flags;
 
 	struct listener_fsm_cmd *fcmd;
 	struct fsm_state_listener *fsm = acmp_fsm_find(acmp, STREAM_LISTENER_FSM,
@@ -894,7 +921,7 @@ static int handle_connect_tx_response(struct acmp *acmp, uint64_t now, const voi
 		 }
 	 
 		 // Initialize the new FSM state
-		 fsm->stream_id = be64toh(resp->listener_guid);
+		 fsm->binding_parameters.stream_id = be64toh(resp->stream_id);
 		 // TODO: This state is only valid for the demo uses cas
 		 fsm->current_state = MILAN_ACMP_LISTENER_STA_PRB_W_RESP;
 		 fsm->timeout = LONG_MAX;
@@ -1039,7 +1066,7 @@ static int handle_connect_rx_command(struct acmp *acmp, uint64_t now, const void
 	struct avb_packet_acmp *cmd;
 	struct avb_packet_acmp *reply;
 	int res;
-	AVB_ACMP_FLAGS flags;
+	uint16_t flags;
 
 #if USE_MILAN
 	struct listener_fsm_cmd *fcmd;
@@ -1057,7 +1084,7 @@ static int handle_connect_rx_command(struct acmp *acmp, uint64_t now, const void
 		 }
 	 
 		 // Initialize the new FSM state
-		 fsm->stream_id = be64toh(p->listener_guid);
+		 fsm->binding_parameters.stream_id = be64toh(p->listener_guid);
 		 fsm->current_state = MILAN_ACMP_LISTENER_STA_UNBOUND;
 		 fsm->timeout = LONG_MAX;
 		 fsm->size = 0;
