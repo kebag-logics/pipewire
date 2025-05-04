@@ -118,9 +118,9 @@ struct listener_fsm_cmd {
 /** Milan v1.2, Sec. 5.5.3.5.3 */
 int handle_fsm_unbound_rcv_bind_rx_cmd_evt(struct acmp *acmp, struct fsm_state_listener *info, void *m, size_t len, int64_t now)
 {
-	pw_log_info("UNBOUND: Responding to a bind_rx_command %zu", len);
+	pw_log_info("Responding to a bind_rx_command %zu", len);
 	if (len == 0){
-		pw_log_info("UNBOUND: Len is: %zu", len);
+		pw_log_info("Len is: %zu", len);
 		spa_assert(0);
 	}
 	struct server *server = acmp->server;
@@ -132,23 +132,23 @@ int handle_fsm_unbound_rcv_bind_rx_cmd_evt(struct acmp *acmp, struct fsm_state_l
 
 
 	/* 1. Check if locked */
-	pw_log_info("UNBOUND: 1. Check if locked");
+	pw_log_info("1. Check if locked");
 	if (be64toh(p->listener_guid) != server->entity_id) {
-		pw_log_info("UNBOUND: Entity is locked.");
+		pw_log_info("Entity is locked.");
 		AVB_PACKET_ACMP_SET_MESSAGE_TYPE(reply, AVB_ACMP_MESSAGE_TYPE_CONNECT_RX_RESPONSE);
 		AVB_PACKET_ACMP_SET_STATUS(reply, AVB_ACMP_STATUS_CONTROLLER_NOT_AUTHORIZED);
 		res = avb_server_send_packet(server, h->dest, AVB_TSN_ETH, h, len);
 		return 0;
 	}
 	/* TODO: 2. Update binding parameters */
-	pw_log_info("UNBOUND: 2. Update binding parameters");
+	pw_log_info("2. Update binding parameters");
 	info->binding_parameters.controller_entity_id = be64toh(p->controller_guid);
 	info->binding_parameters.talker_entity_id = be64toh(p->talker_guid);
 	info->binding_parameters.talker_unique_id = htons(p->talker_unique_id);
 	flags = p->flags;
 
 	/* 3. Send a BIND_RX_RESPONSE */
-	pw_log_info("UNBOUND: 3. Send BIND_RX_RESPONSE");
+	pw_log_info("3. Send BIND_RX_RESPONSE");
 	AVB_PACKET_ACMP_SET_MESSAGE_TYPE(reply, AVB_ACMP_MESSAGE_TYPE_CONNECT_RX_RESPONSE);
 	AVB_PACKET_ACMP_SET_STATUS(reply, AVB_ACMP_STATUS_SUCCESS);
 
@@ -164,15 +164,15 @@ int handle_fsm_unbound_rcv_bind_rx_cmd_evt(struct acmp *acmp, struct fsm_state_l
 	res = avb_server_send_packet(server, h->dest, AVB_TSN_ETH, h, len);
 
 	if (res != 0){
-		pw_log_info("UNBOUND: res: %i", res);
+		pw_log_info("res: %i", res);
 	}
 
 	/* TODO: 4. Start ADP Discovery state machine */
-	pw_log_info("UNBOUND: 4. Start ADP Discovery state machine");
+	pw_log_info("4. Start ADP Discovery state machine");
 		/* TODO: ADP already running. Check details */
 
 	/* 5. Send PROBE_TX_COMMAND */
-	pw_log_info("UNBOUND: 5. Send PROBE_TX_COMMAND");
+	pw_log_info("5. Send PROBE_TX_COMMAND");
 	AVB_PACKET_ACMP_SET_MESSAGE_TYPE(reply, AVB_ACMP_MESSAGE_TYPE_CONNECT_TX_COMMAND);
 	AVB_PACKET_ACMP_SET_STATUS(reply, AVB_ACMP_STATUS_SUCCESS);
 	// TODO: Global sequence id counter?
@@ -191,15 +191,15 @@ int handle_fsm_unbound_rcv_bind_rx_cmd_evt(struct acmp *acmp, struct fsm_state_l
 	res = avb_server_send_packet(server, h->dest, AVB_TSN_ETH, h, len);
 
 	/* TODO: 6. Save a copy of PROBE_TX_COMMAND */
-	pw_log_info("UNBOUND: 6. Save a copy of PROBE_TX_COMMAND");
+	pw_log_info("6. Save a copy of PROBE_TX_COMMAND");
 	// This has already happend by operating on the binding parameters?
 
 	/* TODO: 7. Set TMR_NO_RESP timer to 200ms */
-	pw_log_info("UNBOUND: 7. Set TMR_NO_RESP to 200ms");
+	pw_log_info("7. Set TMR_NO_RESP to 200ms");
 	// info->timeout = now + 200 * SPA_NSEC_PER_MSEC;
 
 	/* TODO: 8. Set the probing status */
-	pw_log_info("UNBOUND: 8. Set the probing status");
+	pw_log_info("8. Set the probing status");
 	// info->probing_status = AVB_MILAN_ACMP_STATUS_PROBING_ACTIVE;
 
 	/* 9. Go to the PRB_W_RESP state */
@@ -579,10 +579,72 @@ int handle_fsm_settled_rsv_ok_rcv_get_rx_state_evt(struct acmp *acmp,
 	return 0;
 }
 
-/** Milan v1.2 5.5.3.5.45 */
+/** Milan v1.2, Sec. 5.5.3.5.45 */
 int handle_fsm_settled_rsv_ok_rcv_unbind_rx_cmd_evt(struct acmp *acmp,
 	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
 {
+	pw_log_info("Responding to a bind_rx_command %zu", len);
+	if (len == 0){
+		pw_log_info("Len is: %zu", len);
+		spa_assert(0);
+	}
+	struct server *server = acmp->server;
+	const struct avb_ethernet_header *h = m;
+	const struct avb_packet_acmp *p = SPA_PTROFF(m, sizeof(*h), void);
+	struct avb_packet_acmp *reply = SPA_PTROFF(h, sizeof(*h), void);
+	struct stream *stream;
+	uint16_t flags = 0;
+	uint8_t res;
+
+	/* 1. Check if locked */
+	pw_log_info("1. Check if locked");
+	if (be64toh(p->listener_guid) != server->entity_id) {
+		pw_log_info("Entity is locked.");
+		AVB_PACKET_ACMP_SET_MESSAGE_TYPE(reply, AVB_ACMP_MESSAGE_TYPE_DISCONNECT_RX_RESPONSE);
+		AVB_PACKET_ACMP_SET_STATUS(reply, AVB_ACMP_STATUS_CONTROLLER_NOT_AUTHORIZED);
+		res = avb_server_send_packet(server, h->dest, AVB_TSN_ETH, h, len);
+		return 0;
+	}
+
+	/* 2. Clear SRP parameters and stop SRP */
+	pw_log_info("2. Clear SRP parameters and stop SRP");
+	// TODO: Check this
+	stream = server_find_stream(server, SPA_DIRECTION_INPUT,
+		ntohs(p->listener_unique_id));
+	if (stream == NULL)
+		return 0;
+
+	stream->peer_id = be64toh(p->stream_id);
+	memcpy(stream->addr, p->stream_dest_mac, 6);
+	stream_deactivate(stream, now);
+	
+	/* TODO: 3. Stop the ADP Discovery state machine */
+	// TODO: Check this
+	pw_log_info("3. Stop the ADP Discovery state machine");
+
+	/* 4. Update binding parameters */
+	pw_log_info("2. Update binding parameters");
+	memset(&info->binding_parameters, 0, sizeof(info->binding_parameters));
+	info->flags = 0;
+
+	/* 5. Set the Probing status to PROBING_DISABLED and ACMP status to 0 */
+	pw_log_info("5. Set the Probing status to PROBING_DISABLED and ACMP status to 0");
+	info->probing_status = AVB_MILAN_ACMP_STATUS_PROBING_DISABLED;
+
+	/*TODO: 6. Send a UNBIND_RX_RESPONSE */
+	pw_log_info("6. Send a UNBIND_RX_RESPONSE");
+
+	AVB_PACKET_ACMP_SET_MESSAGE_TYPE(reply, AVB_ACMP_MESSAGE_TYPE_DISCONNECT_RX_RESPONSE);
+	AVB_PACKET_ACMP_SET_STATUS(reply, AVB_ACMP_STATUS_SUCCESS);
+	reply->talker_guid = 0x0000000000000000;
+	reply->talker_unique_id = 0;
+	reply->connection_count = 0;
+	reply->stream_id = 0x0000000000000000;
+	memset(reply->stream_dest_mac, 0, sizeof(reply->stream_dest_mac));
+	reply->stream_vlan_id = 0;
+	res = avb_server_send_packet(server, h->dest, AVB_TSN_ETH, h, len);
+
+	info->current_state = MILAN_ACMP_LISTENER_STA_UNBOUND;
 	return 0;
 }
 
@@ -608,7 +670,7 @@ int handle_fsm_settled_rsv_ok_evt_tk_unregistered_evt(struct acmp *acmp,
 }
 
 static const struct listener_fsm_cmd listener_unbound[AECP_MILAN_ACMP_EVT_MAX] = {
-	/* Milan v1.2, Sec 5.5.3.5.3 */
+	/* Milan v1.2, Sec. 5.5.3.5.3 */
     [AECP_MILAN_ACMP_EVT_RCV_BIND_RX_CMD] = {
 		.state_handler = handle_fsm_unbound_rcv_bind_rx_cmd_evt },
 
@@ -1145,18 +1207,57 @@ static int handle_ignore(struct acmp *acmp, uint64_t now, const void *m, int len
 	return 0;
 }
 
-/** Milan v1.2 5.5.2.2 UNBIND_RX_COMMAND */
+/* IEEE 1722.1-2021, Sec. 8.1.2. Disconnecting a Stream */
+/** Milan v1.2 Sec. 5.5.2.2 UNBIND_RX_COMMAND */
 static int handle_disconnect_rx_command(struct acmp *acmp, uint64_t now, const void *m, int len)
 {
+
+	pw_log_info("HANDLE: len: %i", len);
 	struct server *server = acmp->server;
 	struct avb_ethernet_header *h;
 	const struct avb_packet_acmp *p = SPA_PTROFF(m, sizeof(*h), void);
 	struct avb_packet_acmp *cmd;
+	struct avb_packet_acmp *reply;
+	int res;
+	uint16_t flags;
 
-	if (be64toh(p->listener_guid) != server->entity_id)
-		return 0;
+#if USE_MILAN
+	struct listener_fsm_cmd *fcmd;
+	struct fsm_state_listener *fsm = acmp_fsm_find(acmp, STREAM_LISTENER_FSM,
+		be64toh(p->listener_guid));
+	// TODO: Only valid for bound receiving unbound.
+	int evt = AECP_MILAN_ACMP_EVT_RCV_UNBIND_RX_CMD;
+	
+	// TODO: Currently creating a new fsm. There should be one. 
+	if (!fsm) {
+		pw_log_info("disconnect_rx_cmd: Creating new state machine for listener 0x%lx", be64toh(p->listener_guid));
+		// Allocate memory for the new FSM state
+		 fsm = stream_listener_fsm_new(acmp, STREAM_LISTENER_FSM);
+		 if (!fsm) {
+			 pw_log_error("Failed to allocate memory for new stream listener state");
+			 return -ENOMEM;
+		 }
 
-#ifndef USE_MILAN
+		 // Initialize the new FSM state
+		 fsm->binding_parameters.stream_id = be64toh(p->stream_id);
+		 // TODO: This state is only valid for the demo uses case
+		 fsm->current_state = MILAN_ACMP_LISTENER_STA_SETTLED_RSV_OK;
+		 fsm->timeout = LONG_MAX;
+		 fsm->size = 0;
+	}
+
+	pw_log_info("Proceeding with SM for listener 0x%lx.", be64toh(p->listener_guid));
+	fcmd = &cmd_listeners_states[fsm->current_state][evt];
+	if (!fcmd) {
+		pw_log_error("Non compatible event for this state, state %d evt id %d",
+			fsm->current_state, evt);
+		spa_assert(0);
+	}
+	// Handover the parameters
+	fcmd->state_handler(acmp, fsm, m, len, now);
+	return 0;
+
+#else
 	h = pending_new(acmp, PENDING_TALKER, now,
 			AVB_ACMP_TIMEOUT_DISCONNECT_TX_COMMAND_MS, m, len);
 	if (h == NULL)
@@ -1166,9 +1267,6 @@ static int handle_disconnect_rx_command(struct acmp *acmp, uint64_t now, const v
 	AVB_PACKET_ACMP_SET_MESSAGE_TYPE(cmd, AVB_ACMP_MESSAGE_TYPE_DISCONNECT_TX_COMMAND);
 	AVB_PACKET_ACMP_SET_STATUS(cmd, AVB_ACMP_STATUS_SUCCESS);
 	return avb_server_send_packet(server, h->dest, AVB_TSN_ETH, h, len);
-
-#else
-
 	return 0;
 #endif
 
