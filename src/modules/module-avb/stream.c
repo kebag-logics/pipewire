@@ -1,5 +1,8 @@
 /* AVB support */
 /* SPDX-FileCopyrightText: Copyright © 2022 Wim Taymans */
+/* SPDX-FileCopyrightText: Copyright © 2025 Kebag-Logic */
+/* SPDX-FileCopyrightText: Copyright © 2025 Alex Malki <alexandre.malki@kebag-logic.com> */
+/* SPDX-FileCopyrightText: Copyright © 2025 Simon Gapp <simon.gapp@kebag-logic.com> */
 /* SPDX-License-Identifier: MIT */
 
 #include <unistd.h>
@@ -449,6 +452,7 @@ error_close:
 static void handle_aaf_packet(struct stream *stream,
 		struct avb_packet_aaf *p, int len)
 {
+	pw_log_info("AAF handling");
 	uint32_t index, n_bytes;
 	int32_t filled;
 
@@ -493,6 +497,7 @@ static void handle_iec61883_packet(struct stream *stream,
 static void on_socket_data(void *data, int fd, uint32_t mask)
 {
 	struct stream *stream = data;
+	pw_log_info("Data on socket: 0x%" PRIx64, stream->peer_id);
 
 	if (mask & SPA_IO_IN) {
 		int len;
@@ -509,16 +514,22 @@ static void on_socket_data(void *data, int fd, uint32_t mask)
 		} else {
 			struct avb_frame_header *h = (void*)buffer;
 			struct avb_packet_iec61883 *p = SPA_PTROFF(h, sizeof(*h), void);
+			pw_log_info("Eth Type: 0x%" PRIx16, ntohs(h->etype));
+			pw_log_info("Type: 0x%" PRIx16, ntohs(h->type));
+			pw_log_info("Subtype: 0x%x\n", p->subtype);
+			// pw_log_info("Raw packet dump:");
+			// for (int i = 0; i < 32 && i < len; i++)
+			// 	pw_log_info("%02x ", buffer[i]);
 			if (memcmp(h->dest, stream->addr, 6) != 0) {
 				return;
 			}
 
 			switch (p->subtype)  {
-				case 0: {
+				case AVB_SUBTYPE_61883_IIDC: {
 						handle_iec61883_packet(stream, p, len - sizeof(*h));
 					}
 					break;
-				case 2: {
+				case AVB_SUBTYPE_AAF: {
 						struct avb_frame_header *h = (void*)buffer;
 						struct avb_packet_aaf *paa = (struct avb_packet_aaf*)p;
 
@@ -538,8 +549,9 @@ int stream_activate(struct stream *stream, uint64_t now)
 	struct server *server = stream->server;
 	struct avb_frame_header *h = (void*)stream->pdu;
 	int fd, res;
-
+	pw_log_info("Activate data");
 	if (stream->source == NULL) {
+		pw_log_info("Setting up source and socket");
 		if ((fd = setup_socket(stream)) < 0)
 			return fd;
 
@@ -552,10 +564,8 @@ int stream_activate(struct stream *stream, uint64_t now)
 			return res;
 		}
 	}
-
 	avb_mrp_attribute_begin(stream->vlan_attr->mrp, now);
 	avb_mrp_attribute_join(stream->vlan_attr->mrp, now, true);
-
 	if (stream->direction == SPA_DIRECTION_INPUT) {
 		stream->listener_attr->attr.listener.stream_id = htobe64(stream->peer_id);
 		stream->listener_attr->param = AVB_MSRP_LISTENER_PARAM_READY;
@@ -567,7 +577,6 @@ int stream_activate(struct stream *stream, uint64_t now)
 	} else {
 		if ((res = avb_maap_get_address(server->maap, stream->addr, stream->index)) < 0)
 			return res;
-
 		stream->listener_attr->attr.listener.stream_id = htobe64(stream->id);
 		stream->listener_attr->param = AVB_MSRP_LISTENER_PARAM_IGNORE;
 		avb_mrp_attribute_begin(stream->listener_attr->mrp, now);
