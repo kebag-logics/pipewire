@@ -230,7 +230,8 @@ static int check_advertise(struct adp *adp, uint64_t now)
 		return -errno;
 
 	e->advertise = true;
-	e->valid_time = 10;
+	// TODO: Was 10, reduced to 4?
+	e->valid_time = 4;
 	e->last_time = now;
 	e->entity_id = entity_id;
 	e->len = sizeof(*h) + sizeof(*p);
