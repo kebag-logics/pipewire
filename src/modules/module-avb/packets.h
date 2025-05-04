@@ -9,6 +9,7 @@
 
 #define AVB_PACKET_MIN_SIZE (60U)
 
+/* IEEE 1722-2016, Table 6 — AVTP stream data subtype values*/
 #define AVB_SUBTYPE_61883_IIDC		0x00
 #define AVB_SUBTYPE_MMA_STREAM		0x01
 #define AVB_SUBTYPE_AAF			0x02
