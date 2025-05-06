@@ -68,12 +68,22 @@ struct avb_packet_aecp_aem_setget_sensor_format {
 	uint64_t sensor_format;
 } __attribute__ ((__packed__));
 
-/* IEEE 1722.1-2021, Table 8-4 - flags field*/
-// #define AVB_AEM_STREAM_INFO_FLAG_CLASS_B			(1u<<0)
-// #define AVB_AEM_STREAM_INFO_FLAG_FAST_CONNECT			(1u<<1)
-// #define AVB_AEM_STREAM_INFO_FLAG_SAVED_STATE			(1u<<2)
-// #define AVB_AEM_STREAM_INFO_FLAG_STREAMING_WAIT			(1u<<3)
-// #define AVB_AEM_STREAM_INFO_FLAG_ENCRYPTED_PDU			(1u<<4)
+/* IEEE 1722.1-2021, Table 8-4 - flags field */
+#define AVB_AEM_STREAM_INFO_FLAG_FLAG_CLASS_B                   (1 << 0)  // 0x0001
+#define AVB_AEM_STREAM_INFO_FLAG_FLAG_FAST_CONNECT              (1 << 1)  // 0x0002
+#define AVB_AEM_STREAM_INFO_FLAG_FLAG_SAVED_STATE               (1 << 2)  // 0x0004
+#define AVB_AEM_STREAM_INFO_FLAG_FLAG_STREAMING_WAIT            (1 << 3)  // 0x0008
+#define AVB_AEM_STREAM_INFO_FLAG_FLAG_SUPPORTS_ENCRYPTED        (1 << 4)  // 0x0010
+#define AVB_AEM_STREAM_INFO_FLAG_FLAG_ENCRYPTED_PDU             (1 << 5)  // 0x0020
+#define AVB_AEM_STREAM_INFO_FLAG_FLAG_SRP_REGISTRATION_FAILED   (1 << 6)  // 0x0040
+#define AVB_AEM_STREAM_INFO_FLAG_FLAG_CL_ENTRIES_VALID          (1 << 7)  // 0x0080
+#define AVB_AEM_STREAM_INFO_FLAG_FLAG_NO_SRP                    (1 << 8)  // 0x0100
+#define AVB_AEM_STREAM_INFO_FLAG_FLAG_UDP                       (1 << 9)  // 0x0200
+
+
+/* Milan v1.2, Table 5.23: REGISTERING_FAILED flag. */
+// #define AVB_AEM_MILAN_STREAM_INFO_REGISTERING_FAILED			(1 << 25)
+
 // #define AVB_AEM_STREAM_INFO_FLAG_STREAM_VLAN_ID_VALID		(1u<<25)
 // #define AVB_AEM_STREAM_INFO_FLAG_CONNECTED			(1u<<26)
 // #define AVB_AEM_STREAM_INFO_FLAG_MSRP_FAILURE_VALID		(1u<<27)
@@ -81,22 +91,6 @@ struct avb_packet_aecp_aem_setget_sensor_format {
 // #define AVB_AEM_STREAM_INFO_FLAG_MSRP_ACC_LAT_VALID		(1u<<29)
 // #define AVB_AEM_STREAM_INFO_FLAG_STREAM_ID_VALID		(1u<<30)
 // #define AVB_AEM_STREAM_INFO_FLAG_STREAM_FORMAT_VALID		(1u<<31)
-typedef union {
-    struct {
-        uint16_t reserved_0_5         : 6;  // Bits 0–5: Reserved
-        uint16_t udp                  : 1;  // Bit 6
-        uint16_t no_srp               : 1;  // Bit 7
-        uint16_t cl_entries_valid     : 1;  // Bit 8
-        uint16_t srp_registration_failed : 1; // Bit 9
-        uint16_t encrypted_pdu        : 1;  // Bit 10
-        uint16_t supports_encrypted   : 1;  // Bit 11
-        uint16_t streaming_wait       : 1;  // Bit 12
-        uint16_t saved_state          : 1;  // Bit 13
-        uint16_t fast_connect         : 1;  // Bit 14
-        uint16_t class_b              : 1;  // Bit 15
-    } bits;
-    uint16_t value;
-} AVB_ACMP_FLAGS;
 
 struct avb_packet_aecp_aem_setget_stream_info {
 	uint16_t descriptor_type;

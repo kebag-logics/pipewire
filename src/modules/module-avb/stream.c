@@ -1,5 +1,8 @@
 /* AVB support */
 /* SPDX-FileCopyrightText: Copyright © 2022 Wim Taymans */
+/* SPDX-FileCopyrightText: Copyright © 2025 Kebag-Logic */
+/* SPDX-FileCopyrightText: Copyright © 2025 Alex Malki <alexandre.malki@kebag-logic.com> */
+/* SPDX-FileCopyrightText: Copyright © 2025 Simon Gapp <simon.gapp@kebag-logic.com> */
 /* SPDX-License-Identifier: MIT */
 
 #include <unistd.h>
@@ -310,10 +313,21 @@ struct stream *server_create_stream(struct server *server,
 				&sink_stream_events,
 			stream);
 
-	stream->info.info.raw.format = SPA_AUDIO_FORMAT_S24_32_BE;
+	//TODO find if this is valid  {
+	if (direction == SPA_DIRECTION_INPUT) {
+		stream->info.info.raw.format = SPA_AUDIO_FORMAT_S32_BE;
+	} else {
+		stream->info.info.raw.format = SPA_AUDIO_FORMAT_S24_32_BE;
+	}
 	stream->info.info.raw.flags = SPA_AUDIO_FLAG_UNPOSITIONED;
 	stream->info.info.raw.rate = 48000;
-	stream->info.info.raw.channels = 8;
+	// TODO find the value from the descriptor
+	if (direction == SPA_DIRECTION_INPUT) {
+		// FIXME!11!! A Hacky hack for 4 channel output streams to work
+		stream->info.info.raw.channels = 4;
+	} else {
+		stream->info.info.raw.channels = 8;
+	}
 	stream->stride = stream->info.info.raw.channels * 4;
 
 	n_params = 0;
@@ -380,29 +394,34 @@ static int setup_socket(struct stream *stream)
 	}
 
 	spa_zero(req);
-	snprintf(req.ifr_name, sizeof(req.ifr_name), "%s", server->ifname);
+	if (stream->direction == SPA_DIRECTION_OUTPUT) {
+		snprintf(req.ifr_name, sizeof(req.ifr_name), "%s", server->ifname);
+	}
+	 else {
+		snprintf(req.ifr_name, sizeof(req.ifr_name), "%s.2", server->ifname);
+	}
+
 	res = ioctl(fd, SIOCGIFINDEX, &req);
 	if (res < 0) {
 		pw_log_error("SIOCGIFINDEX %s failed: %m", server->ifname);
 		res = -errno;
 		goto error_close;
 	}
-
 	spa_zero(stream->sock_addr);
 	stream->sock_addr.sll_family = AF_PACKET;
 	stream->sock_addr.sll_protocol = htons(ETH_P_TSN);
 	stream->sock_addr.sll_ifindex = req.ifr_ifindex;
 
+	res = setsockopt(fd, SOL_SOCKET, SO_PRIORITY, &stream->prio,
+		sizeof(stream->prio));
+	if (res < 0) {
+		pw_log_error("setsockopt(SO_PRIORITY %d) failed: %m", stream->prio);
+		res = -errno;
+		goto error_close;
+	}
+
 	if (stream->direction == SPA_DIRECTION_OUTPUT) {
 		struct sock_txtime txtime_cfg;
-
-		res = setsockopt(fd, SOL_SOCKET, SO_PRIORITY, &stream->prio,
-				sizeof(stream->prio));
-		if (res < 0) {
-			pw_log_error("setsockopt(SO_PRIORITY %d) failed: %m", stream->prio);
-			res = -errno;
-			goto error_close;
-		}
 
 		txtime_cfg.clockid = CLOCK_TAI;
 		txtime_cfg.flags = 0;
@@ -431,6 +450,7 @@ static int setup_socket(struct stream *stream)
 		res = setsockopt(fd, SOL_PACKET, PACKET_ADD_MEMBERSHIP,
 				&mreq, sizeof(struct packet_mreq));
 
+
 		pw_log_info("join %s", avb_utils_format_addr(buf, 128, stream->addr));
 
 		if (res < 0) {
@@ -449,11 +469,12 @@ error_close:
 static void handle_aaf_packet(struct stream *stream,
 		struct avb_packet_aaf *p, int len)
 {
+	// pw_log_info("AAF handling");
 	uint32_t index, n_bytes;
 	int32_t filled;
 
 	filled = spa_ringbuffer_get_write_index(&stream->ring, &index);
-	n_bytes = ntohs(p->data_len) - 8;
+	n_bytes = ntohs(p->data_len);
 
 	if (filled + n_bytes > stream->buffer_size) {
 		pw_log_debug("capture overrun");
@@ -493,6 +514,7 @@ static void handle_iec61883_packet(struct stream *stream,
 static void on_socket_data(void *data, int fd, uint32_t mask)
 {
 	struct stream *stream = data;
+	// pw_log_info("Data on socket: 0x%" PRIx64, stream->peer_id);
 
 	if (mask & SPA_IO_IN) {
 		int len;
@@ -503,26 +525,24 @@ static void on_socket_data(void *data, int fd, uint32_t mask)
 		if (len < 0) {
 			pw_log_warn("got recv error: %m");
 		}
-		else if (len < (int)sizeof(struct avb_packet_header)) {
+		else if (len < (int)sizeof(struct avb_frame_header_vlan_stripped)) {
 			pw_log_warn("short packet received (%d < %d)", len,
-					(int)sizeof(struct avb_packet_header));
+					(int)sizeof(struct avb_frame_header_vlan_stripped));
 		} else {
-			struct avb_frame_header *h = (void*)buffer;
-			struct avb_packet_iec61883 *p = SPA_PTROFF(h, sizeof(*h), void);
+			struct avb_frame_header_vlan_stripped *h = (void*)buffer;
+			struct avb_packet_aaf *p = SPA_PTROFF(h, sizeof(*h), void);
 			if (memcmp(h->dest, stream->addr, 6) != 0) {
 				return;
 			}
 
 			switch (p->subtype)  {
-				case 0: {
+				case AVB_SUBTYPE_61883_IIDC: {
+						struct avb_packet_iec61883 *p = SPA_PTROFF(h, sizeof(*h), void);
 						handle_iec61883_packet(stream, p, len - sizeof(*h));
 					}
 					break;
-				case 2: {
-						struct avb_frame_header *h = (void*)buffer;
-						struct avb_packet_aaf *paa = (struct avb_packet_aaf*)p;
-
-						handle_aaf_packet(stream, paa, len - sizeof(*h));
+				case AVB_SUBTYPE_AAF: {
+						handle_aaf_packet(stream, p,  len - sizeof(*h));
 					}
 					break;
 				default:
@@ -538,8 +558,9 @@ int stream_activate(struct stream *stream, uint64_t now)
 	struct server *server = stream->server;
 	struct avb_frame_header *h = (void*)stream->pdu;
 	int fd, res;
-
+	pw_log_info("Activate data");
 	if (stream->source == NULL) {
+		pw_log_info("Setting up source and socket");
 		if ((fd = setup_socket(stream)) < 0)
 			return fd;
 
@@ -552,10 +573,8 @@ int stream_activate(struct stream *stream, uint64_t now)
 			return res;
 		}
 	}
-
 	avb_mrp_attribute_begin(stream->vlan_attr->mrp, now);
 	avb_mrp_attribute_join(stream->vlan_attr->mrp, now, true);
-
 	if (stream->direction == SPA_DIRECTION_INPUT) {
 		stream->listener_attr->attr.listener.stream_id = htobe64(stream->peer_id);
 		stream->listener_attr->param = AVB_MSRP_LISTENER_PARAM_READY;
@@ -567,7 +586,6 @@ int stream_activate(struct stream *stream, uint64_t now)
 	} else {
 		if ((res = avb_maap_get_address(server->maap, stream->addr, stream->index)) < 0)
 			return res;
-
 		stream->listener_attr->attr.listener.stream_id = htobe64(stream->id);
 		stream->listener_attr->param = AVB_MSRP_LISTENER_PARAM_IGNORE;
 		avb_mrp_attribute_begin(stream->listener_attr->mrp, now);

@@ -2,6 +2,7 @@
 /* SPDX-FileCopyrightText: Copyright © 2022 Wim Taymans */
 /* SPDX-FileCopyrightText: Copyright © 2025 Kebag-Logic */
 /* SPDX-FileCopyrightText: Copyright © 2025 Alexandre Malki <alexandre.malki@kebag-logic.com> */
+/* SPDX-FileCopyrightText: Copyright © 2025 Simon Gapp <simon.gapp@kebag-logic.com> */
 /* SPDX-License-Identifier: MIT */
 
 #include <linux/if_ether.h>
@@ -33,6 +34,7 @@
 #include "descriptors.h"
 #include "aecp-state-vars.h"
 #include "utils.h"
+#include "descriptors.h"
 
 #define DEFAULT_INTERVAL_S	0
 #if USE_MILAN
@@ -163,14 +165,17 @@ int avb_server_make_socket(struct server *server, uint16_t type, const uint8_t m
 	}
 	memcpy(server->mac_addr, req.ifr_hwaddr.sa_data, sizeof(server->mac_addr));
 
-	server->entity_id = (uint64_t)server->mac_addr[0] << 56 |
-			(uint64_t)server->mac_addr[1] << 48 |
-			(uint64_t)server->mac_addr[2] << 40 |
-			(uint64_t)0xff << 32 |
-			(uint64_t)0xfe << 24 |
-			(uint64_t)server->mac_addr[3] << 16 |
-			(uint64_t)server->mac_addr[4] << 8 |
-			(uint64_t)server->mac_addr[5];
+	// server->entity_id = (uint64_t)server->mac_addr[0] << 56 |
+	// 		(uint64_t)server->mac_addr[1] << 48 |
+	// 		(uint64_t)server->mac_addr[2] << 40 |
+	// 		(uint64_t)0xff << 32 |
+	// 		(uint64_t)0xfe << 24 |
+	// 		(uint64_t)server->mac_addr[3] << 16 |
+	// 		(uint64_t)server->mac_addr[4] << 8 |
+	// 		(uint64_t)server->mac_addr[5];
+
+	// TODO: Replaced MAC Address witht static value.
+	server->entity_id = (uint64_t)DSC_ENTITY_MODEL_ENTITY_ID;
 
 	spa_zero(sll);
 	sll.sll_family = AF_PACKET;
@@ -284,7 +289,7 @@ struct server *avdecc_server_new(struct impl *impl, struct spa_dict *props)
 	server->mmrp = avb_mmrp_register(server);
 	server->msrp = avb_msrp_register(server);
 	server->mvrp = avb_mvrp_register(server);
-	avb_adp_register(server);
+	server->adp  = avb_adp_register(server);
 	avb_acmp_register(server);
 
 	server->domain_attr = avb_msrp_attribute_new(server->msrp,

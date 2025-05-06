@@ -83,4 +83,7 @@ struct avb_packet_adp {
 struct avb_adp *avb_adp_register(struct server *server);
 void avb_adp_unregister(struct avb_adp *adp);
 
+/** Retrieve and check if the talker / listener exists */
+int avb_adp_find_existing(struct server *server, uint64_t id);
+
 #endif /* AVB_ADP_H */

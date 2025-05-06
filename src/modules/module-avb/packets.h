@@ -9,6 +9,7 @@
 
 #define AVB_PACKET_MIN_SIZE (60U)
 
+/* IEEE 1722-2016, Table 6 — AVTP stream data subtype values*/
 #define AVB_SUBTYPE_61883_IIDC		0x00
 #define AVB_SUBTYPE_MMA_STREAM		0x01
 #define AVB_SUBTYPE_AAF			0x02
@@ -41,6 +42,12 @@ struct avb_frame_header {
 	uint8_t src[6];
 	uint16_t type;		/* 802.1Q Virtual Lan 0x8100 */
 	uint16_t prio_cfi_id;
+	uint16_t etype;
+} __attribute__ ((__packed__));
+
+struct avb_frame_header_vlan_stripped {
+	uint8_t dest[6];
+	uint8_t src[6];
 	uint16_t etype;
 } __attribute__ ((__packed__));
 

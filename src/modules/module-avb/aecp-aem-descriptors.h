@@ -57,6 +57,12 @@
 
 #define AVB_AEM_DESC_INVALID			0xffff
 
+/* IEEE 1722.1-2021, Table 7-24 - Port Flags */
+// No flag is not defined in table
+#define AVB_AEM_PORT_FLAG_NO_FLAG 0x0000
+#define AVB_AEM_PORT_FLAG_CLOCK_SYNC_SOURCE 0x0001
+#define AVB_AEM_PORT_FLAG_ASYNC_SAMPLE_RATE_CONV 0x0002
+#define AVB_AEM_PORT_FLAG_SYNC_SAMPLE_RATE_CONV 0x0004
 
 struct avb_aem_desc_entity {
 	uint64_t entity_id;
@@ -138,7 +144,8 @@ struct avb_aem_desc_audio_unit {
 	struct avb_aem_desc_sampling_rate sampling_rates[0];
 } __attribute__ ((__packed__));
 
-#define AVB_AEM_AUDIO_CLUSTER_TYPE_IEC60958 0
+/* IEEE 1722.1-2021, Table 7-28 - AUDIO_CLUSTER format values */
+#define AVB_AEM_AUDIO_CLUSTER_TYPE_IEC60958 0x00
 #define AVB_AEM_AUDIO_CLUSTER_TYPE_MBLA 	0x40
 #define AVB_AEM_AUDIO_CLUSTER_TYPE_MIDI 	0x80
 #define AVB_AEM_AUDIO_CLUSTER_TYPE_SMPTE 	0x88

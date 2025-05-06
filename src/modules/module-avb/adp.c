@@ -230,7 +230,8 @@ static int check_advertise(struct adp *adp, uint64_t now)
 		return -errno;
 
 	e->advertise = true;
-	e->valid_time = 10;
+	// TODO: Was 10, reduced to 4?
+	e->valid_time = 4;
 	e->last_time = now;
 	e->entity_id = entity_id;
 	e->len = sizeof(*h) + sizeof(*p);
@@ -349,6 +350,19 @@ struct avb_adp *avb_adp_register(struct server *server)
 	avdecc_server_add_listener(server, &adp->server_listener, &server_events, adp);
 
 	return (struct avb_adp*)adp;
+}
+
+int avb_adp_find_existing(struct server *server, uint64_t id)
+{
+	struct adp *adp = (struct adp*) server->adp;
+
+	struct entity *entity = find_entity_by_id(adp, id);
+	if (entity) {
+		pw_log_info("entity id 0x%lx found\n", id);
+		return 0;
+	}
+
+	return -1;
 }
 
 void avb_adp_unregister(struct avb_adp *adp)
