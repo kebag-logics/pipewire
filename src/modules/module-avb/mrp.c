@@ -32,6 +32,15 @@ struct attribute {
 	struct spa_hook_list listener_list;
 };
 
+enum fsm_lva {
+	FSM_LVA_ACTIVE,
+	FSM_LVA_PASSIVE
+};
+struct fsm_leave_all_timer {
+	enum fsm_lva state;
+	uint64_t leave_all_timeout;
+};
+
 struct mrp {
 	struct server *server;
 	struct spa_hook server_listener;
@@ -41,7 +50,8 @@ struct mrp {
 	struct spa_list attributes;
 
 	uint64_t periodic_timeout;
-	uint64_t leave_all_timeout;
+
+	struct fsm_leave_all_timer lva_timer;
 	uint64_t join_timeout;
 };
 
@@ -60,6 +70,17 @@ static void global_event(struct mrp *mrp, uint64_t now, uint8_t event)
 	mrp_emit_event(mrp, now, event);
 }
 
+static void	mrp_set_update_lva(struct mrp *mrp, uint64_t now, bool force_send)
+{
+	if (!force_send) {
+		mrp->lva_timer.leave_all_timeout = now
+							+ (MRP_LVATIMER_MS + (random() % (MRP_LVATIMER_MS / 2)))
+							* SPA_NSEC_PER_MSEC;
+	} else {
+		mrp->lva_timer.leave_all_timeout = now;
+	}
+}
+
 static void mrp_periodic(void *data, uint64_t now)
 {
 	struct mrp *mrp = data;
@@ -71,13 +92,15 @@ static void mrp_periodic(void *data, uint64_t now)
 			global_event(mrp, now, AVB_MRP_EVENT_PERIODIC);
 		mrp->periodic_timeout = now + MRP_PERIODTIMER_MS * SPA_NSEC_PER_MSEC;
 	}
-	if (now > mrp->leave_all_timeout) {
-		if (mrp->leave_all_timeout > 0) {
+
+	if (now > mrp->lva_timer.leave_all_timeout) {
+		/* 802.1Q-2014 Table 10-5 */
+		if (mrp->lva_timer.leave_all_timeout > 0) {
 			global_event(mrp, now, AVB_MRP_EVENT_RX_LVA);
 			leave_all = true;
 		}
-		mrp->leave_all_timeout = now + (MRP_LVATIMER_MS + (random() % (MRP_LVATIMER_MS / 2)))
-			* SPA_NSEC_PER_MSEC;
+		mrp_set_update_lva(mrp, now, false);
+		mrp->lva_timer.state = FSM_LVA_ACTIVE;
 	}
 
 	if (now > mrp->join_timeout) {
@@ -232,6 +255,23 @@ void avb_mrp_attribute_update_state(struct avb_mrp_attribute *attr, uint64_t now
 	uint8_t notify = 0, state;
 	uint8_t send = 0;
 
+	// Handle the LVA timer FSM
+	switch (event) {
+		case AVB_MRP_EVENT_RX_LVA:
+			mrp_set_update_lva(mrp, now, false);
+			mrp->lva_timer.state = FSM_LVA_PASSIVE;
+		break;
+		case AVB_MRP_EVENT_TX:
+			if (mrp->lva_timer.state == FSM_LVA_ACTIVE) {
+				mrp_set_update_lva(mrp, now, true);
+			}
+			mrp->lva_timer.state = FSM_LVA_PASSIVE;
+		// TODO send leave al
+		break;
+		default:
+		break;
+	}
+
 	state = a->registrar_state;
 
 	switch (event) {
@@ -295,7 +335,9 @@ void avb_mrp_attribute_update_state(struct avb_mrp_attribute *attr, uint64_t now
 	}
 
 	if (a->registrar_state != state || notify) {
-		pw_log_debug("attr %p: %d %d -> %d %d", a, event, a->registrar_state, state, notify);
+		pw_log_warn("REG: attr %p: %s %s %s -> %s %s notify? %s", a, a->attr.name,
+			 mrp_event_char[event], mrp_registrar_state_char[a->registrar_state],
+			mrp_registrar_state_char[state], mrp_send_char[notify], notify ? "YES":"NO");
 		a->registrar_state = state;
 	}
 
@@ -394,8 +436,8 @@ void avb_mrp_attribute_update_state(struct avb_mrp_attribute *attr, uint64_t now
 			break;
 		}
 		break;
-	case AVB_MRP_EVENT_RX_LV:
 	case AVB_MRP_EVENT_RX_LVA:
+	case AVB_MRP_EVENT_RX_LV:
 	case AVB_MRP_EVENT_REDECLARE:
 		switch (state) {
 		case AVB_MRP_VO:
@@ -520,9 +562,12 @@ void avb_mrp_attribute_update_state(struct avb_mrp_attribute *attr, uint64_t now
 		break;
 	}
 	if (a->applicant_state != state || send) {
-		pw_log_debug("attr %p: %d %d -> %d %d", a, event, a->applicant_state, state, send);
+		pw_log_warn("APP: attr %p: %s %s %s -> %s %d:%s joined? %s", a, a->attr.name,
+			mrp_event_char[event], mrp_applicant_state_char[a->applicant_state],
+			mrp_applicant_state_char[state], send, mrp_send_char[send], a->joined? "YES" : " NO");
 		a->applicant_state = state;
 	}
+
 	if (a->joined)
 		a->attr.pending_send = send;
 }

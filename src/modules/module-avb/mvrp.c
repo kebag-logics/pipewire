@@ -189,6 +189,7 @@ struct avb_mvrp_attribute *avb_mvrp_attribute_new(struct avb_mvrp *m,
 	a = attr->user_data;
 	a->attr.mrp = attr;
 	a->attr.type = type;
+	attr->name = "MVRP";
 	spa_list_append(&mvrp->attributes, &a->link);
 	avb_mrp_attribute_add_listener(attr, &a->listener, &mrp_attr_events, a);
 

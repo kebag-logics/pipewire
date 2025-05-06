@@ -36,6 +36,7 @@ struct stream {
 	struct spa_source *source;
 	int prio;
 	int vlan_id;
+	uint64_t starttime;
 	int mtt;
 	int t_uncertainty;
 	uint32_t frames_per_pdu;
@@ -48,6 +49,7 @@ struct stream {
 	int64_t pdu_period;
 	uint8_t pdu_seq;
 	uint8_t prev_seq;
+	uint64_t send_time;
 	uint8_t dbc;
 
 	struct iovec iov[3];

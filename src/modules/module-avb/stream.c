@@ -126,7 +126,7 @@ static int flush_write(struct stream *stream, uint64_t current_time)
 		p->seq_num = stream->pdu_seq++;
 		p->tv = 1;
 		// the timestamp is not 64 but 32 bit, there will be some head trunc
-		p->timestamp = ptime;
+		p->timestamp = htonl(ptime);
 #ifdef USE_MILAN
 #else
 		p->dbc = dbc;
@@ -160,6 +160,7 @@ static void on_sink_stream_process(void *data)
 	struct spa_data *d;
 	int32_t filled;
 	uint32_t index, offs, avail, size;
+	uint64_t time_now;
 	struct timespec now;
 
 	if ((buf = pw_stream_dequeue_buffer(stream->stream)) == NULL) {
@@ -187,9 +188,10 @@ static void on_sink_stream_process(void *data)
 		spa_ringbuffer_write_update(&stream->ring, index);
 	}
 	pw_stream_queue_buffer(stream->stream, buf);
+	clock_gettime(CLOCK_REALTIME, &now);
 
-	clock_gettime(CLOCK_TAI, &now);
-	flush_write(stream, SPA_TIMESPEC_TO_NSEC(&now));
+	time_now = SPA_TIMESPEC_TO_NSEC(&now);
+	flush_write(stream, time_now);
 }
 
 static void setup_pdu(struct stream *stream)
@@ -391,14 +393,15 @@ struct stream *server_create_stream(struct server *server,
 	stream->talker_attr = avb_msrp_attribute_new(server->msrp,
 			AVB_MSRP_ATTRIBUTE_TYPE_TALKER_ADVERTISE);
 	stream->talker_attr->attr.talker.vlan_id = htons(stream->vlan_id);
-	stream->talker_attr->attr.talker.tspec_max_frame_size = htons(32 + stream->frames_per_pdu * stream->stride);
+	// TODO fix, make sure to only use the necessary bandwidth
+	stream->talker_attr->attr.talker.tspec_max_frame_size = htons(24 + 1 + stream->frames_per_pdu * stream->stride);
 	stream->talker_attr->attr.talker.tspec_max_interval_frames =
 		htons(AVB_MSRP_TSPEC_MAX_INTERVAL_FRAMES_DEFAULT);
 	stream->talker_attr->attr.talker.priority = stream->prio;
 	stream->talker_attr->attr.talker.rank = AVB_MSRP_RANK_DEFAULT;
 
-	// TODO Figure a way to retrieve such a value.
-	stream->talker_attr->attr.talker.accumulated_latency = htonl(95);
+	// TODO Figure a way to retrieve such a value., this is too low
+	stream->talker_attr->attr.talker.accumulated_latency = htonl(130829);
 
 	return stream;
 
@@ -623,9 +626,10 @@ int stream_activate(struct stream *stream, uint64_t now)
 	} else {
 		if ((res = avb_maap_get_address(server->maap, stream->addr, stream->index)) < 0)
 			return res;
-		stream->listener_attr->attr.listener.stream_id = htobe64(stream->id);
-		stream->listener_attr->param = AVB_MSRP_LISTENER_PARAM_IGNORE;
-		avb_mrp_attribute_begin(stream->listener_attr->mrp, now);
+
+		// stream->listener_attr->attr.listener.stream_id = htobe64(stream->id);
+		// stream->listener_attr->param = AVB_MSRP_LISTENER_PARAM_IGNORE;
+		// avb_mrp_attribute_begin(stream->listener_attr->mrp, now);
 
 		stream->talker_attr->attr.talker.stream_id = htobe64(stream->id);
 		memcpy(stream->talker_attr->attr.talker.dest_addr, stream->addr, 6);
@@ -636,6 +640,7 @@ int stream_activate(struct stream *stream, uint64_t now)
 		memcpy(h->src, server->mac_addr, 6);
 		avb_mrp_attribute_begin(stream->talker_attr->mrp, now);
 		avb_mrp_attribute_join(stream->talker_attr->mrp, now, true);
+		stream->starttime = 0;
 	}
 	pw_stream_set_active(stream->stream, true);
 	return 0;
