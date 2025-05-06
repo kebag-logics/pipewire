@@ -17,7 +17,7 @@
 
 #include <pipewire/pipewire.h>
 
-#define BUFFER_SIZE	(1u<<17)
+#define BUFFER_SIZE	(1u<<16)
 #define BUFFER_MASK	(BUFFER_SIZE-1)
 
 // Milan TODO

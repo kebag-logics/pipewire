@@ -91,7 +91,7 @@ static int flush_write(struct stream *stream, uint64_t current_time)
 {
 	int32_t avail;
 	uint32_t index;
-        uint64_t ptime, txtime;
+	uint64_t ptime, txtime;
 	int pdu_count;
 	ssize_t n;
 	struct avb_frame_header *h = (void*)stream->pdu;
@@ -134,7 +134,7 @@ static int flush_write(struct stream *stream, uint64_t current_time)
 		p->seq_num = stream->pdu_seq++;
 		p->tv = 1;
 		// the timestamp is not 64 but 32 bit, there will be some head trunc
-		p->timestamp = htonl(stream->starttime); // use to be ptime
+		p->timestamp = htonl(ptime); // use to be ptime
 #ifdef USE_MILAN
 #else
 		p->dbc = dbc;
