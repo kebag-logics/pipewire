@@ -15,8 +15,21 @@
 
 #include <pipewire/pipewire.h>
 
-#define BUFFER_SIZE	(1u<<15)
+#define BUFFER_SIZE	(1u<<17)
 #define BUFFER_MASK	(BUFFER_SIZE-1)
+
+// Milan TODO
+#define AVB_MILAN_MAX_PTO	2000000
+
+/**
+ * The t uncertainty is a representation of the realtimeness of the system
+ * running PW, the issue is the following:
+ *  * Because pipewire assume the packet for a frame a linearly send for mulitple
+ * 		audio frame, it happens that on 2 consecutive process_stream, the time,
+ * 		has slow down a bit, and the ETF would complain about not having space.asm
+ *  * This should be measured empirically.
+ */
+#define AVB_STREAM_T_UNCERTAINTY	2000000
 
 struct stream {
 	struct spa_list link;

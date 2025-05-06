@@ -111,7 +111,12 @@ static int flush_write(struct stream *stream, uint64_t current_time)
 	}
 	// the t_uncertainty is 0 for now
 	txtime = current_time + stream->t_uncertainty;
-	ptime = txtime + 2000000;
+	ptime = txtime + stream->mtt;
+	if (!stream->starttime) {
+		stream->starttime = ptime;
+	} else {
+		stream->starttime += stream->mtt;
+	}
 #ifdef USE_MILAN
 #else
 	dbc = stream->dbc;
@@ -129,7 +134,7 @@ static int flush_write(struct stream *stream, uint64_t current_time)
 		p->seq_num = stream->pdu_seq++;
 		p->tv = 1;
 		// the timestamp is not 64 but 32 bit, there will be some head trunc
-		p->timestamp = htonl(ptime);
+		p->timestamp = htonl(stream->starttime); // use to be ptime
 #ifdef USE_MILAN
 #else
 		p->dbc = dbc;
@@ -143,6 +148,7 @@ static int flush_write(struct stream *stream, uint64_t current_time)
 		txtime += stream->pdu_period;
 		ptime += stream->pdu_period;
 		index += stream->payload_size;
+		stream->starttime += stream->pdu_period;
 #ifdef USE_MILAN
 #else
 		dbc += stream->frames_per_pdu;
@@ -194,6 +200,8 @@ static void on_sink_stream_process(void *data)
 	clock_gettime(CLOCK_TAI, &now);
 
 	time_now = SPA_TIMESPEC_TO_NSEC(&now);
+
+
 	flush_write(stream, time_now);
 }
 
@@ -384,6 +392,7 @@ struct stream *server_create_stream(struct server *server,
 			params, n_params)) < 0)
 		goto error_free_stream;
 
+	// TODO find this from the descriptor
 	stream->frames_per_pdu = 6;
 	stream->pdu_period = SPA_NSEC_PER_SEC * stream->frames_per_pdu /
                           stream->info.info.raw.rate;
@@ -397,6 +406,7 @@ struct stream *server_create_stream(struct server *server,
 			AVB_MSRP_ATTRIBUTE_TYPE_TALKER_ADVERTISE);
 	stream->talker_attr->attr.talker.vlan_id = htons(stream->vlan_id);
 	// TODO fix, make sure to only use the necessary bandwidth
+	// TODO test and change for sizeof(struct avb_packet_aaf)
 	stream->talker_attr->attr.talker.tspec_max_frame_size = htons(24 + 1 + stream->frames_per_pdu * stream->stride);
 	stream->talker_attr->attr.talker.tspec_max_interval_frames =
 		htons(AVB_MSRP_TSPEC_MAX_INTERVAL_FRAMES_DEFAULT);
@@ -630,10 +640,6 @@ int stream_activate(struct stream *stream, uint64_t now)
 		if ((res = avb_maap_get_address(server->maap, stream->addr, stream->index)) < 0)
 			return res;
 
-		// stream->listener_attr->attr.listener.stream_id = htobe64(stream->id);
-		// stream->listener_attr->param = AVB_MSRP_LISTENER_PARAM_IGNORE;
-		// avb_mrp_attribute_begin(stream->listener_attr->mrp, now);
-
 		stream->talker_attr->attr.talker.stream_id = htobe64(stream->id);
 		memcpy(stream->talker_attr->attr.talker.dest_addr, stream->addr, 6);
 
@@ -644,6 +650,10 @@ int stream_activate(struct stream *stream, uint64_t now)
 		avb_mrp_attribute_begin(stream->talker_attr->mrp, now);
 		avb_mrp_attribute_join(stream->talker_attr->mrp, now, true);
 		stream->starttime = 0;
+		// TODO retrieve the presentation time, for now the defaault is 2ms
+		stream->mtt = AVB_MILAN_MAX_PTO;
+		// TODO retrieve a way to get the average system latency and multiply it by 2.
+		stream->t_uncertainty = AVB_STREAM_T_UNCERTAINTY;
 	}
 	pw_stream_set_active(stream->stream, true);
 	return 0;
