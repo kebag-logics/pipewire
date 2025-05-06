@@ -95,16 +95,24 @@ static int flush_write(struct stream *stream, uint64_t current_time)
 	int pdu_count;
 	ssize_t n;
 	struct avb_frame_header *h = (void*)stream->pdu;
+#ifdef USE_MILAN
+	struct avb_packet_aaf *p = SPA_PTROFF(h, sizeof(*h), void);
+#else
 	struct avb_packet_iec61883 *p = SPA_PTROFF(h, sizeof(*h), void);
 	uint8_t dbc;
+#endif
 
 	avail = spa_ringbuffer_get_read_index(&stream->ring, &index);
 
 	pdu_count = (avail / stream->stride) / stream->frames_per_pdu;
 
+	// the t_uncertainty is 0 for now
 	txtime = current_time + stream->t_uncertainty;
 	ptime = txtime + stream->mtt;
+#ifdef USE_MILAN
+#else
 	dbc = stream->dbc;
+#endif
 
 	while (pdu_count--) {
 		*(uint64_t*)CMSG_DATA(stream->cmsg) = txtime;
@@ -117,8 +125,12 @@ static int flush_write(struct stream *stream, uint64_t current_time)
 
 		p->seq_num = stream->pdu_seq++;
 		p->tv = 1;
+		// the timestamp is not 64 but 32 bit, there will be some head trunc
 		p->timestamp = ptime;
+#ifdef USE_MILAN
+#else
 		p->dbc = dbc;
+#endif // USE_MILAN
 
 		n = sendmsg(stream->source->fd, &stream->msg, MSG_NOSIGNAL);
 		if (n < 0 || n != (ssize_t)stream->pdu_size) {
@@ -128,9 +140,15 @@ static int flush_write(struct stream *stream, uint64_t current_time)
 		txtime += stream->pdu_period;
 		ptime += stream->pdu_period;
 		index += stream->payload_size;
+#ifdef USE_MILAN
+#else
 		dbc += stream->frames_per_pdu;
+#endif
 	}
+#ifdef USE_MILAN
+#else
 	stream->dbc = dbc;
+#endif // USE_MILAN
 	spa_ringbuffer_read_update(&stream->ring, index);
 	return 0;
 }
@@ -176,8 +194,13 @@ static void on_sink_stream_process(void *data)
 
 static void setup_pdu(struct stream *stream)
 {
+	// This should be dependant on the AEM description of the stream.
 	struct avb_frame_header *h;
+#ifdef USE_MILAN
+	struct avb_packet_aaf *p;
+#else
 	struct avb_packet_iec61883 *p;
+#endif
 	ssize_t payload_size, hdr_size, pdu_size;
 
 	spa_memzero(stream->pdu, sizeof(stream->pdu));
@@ -193,10 +216,20 @@ static void setup_pdu(struct stream *stream)
 	h->etype = htons(0x22f0);
 
 	if (stream->direction == SPA_DIRECTION_OUTPUT) {
-		p->subtype = AVB_SUBTYPE_61883_IIDC;
+		p->subtype = AVB_SUBTYPE_AAF;
 		p->sv = 1;
 		p->stream_id = htobe64(stream->id);
-		p->data_len = htons(payload_size+8);
+
+#ifdef USE_MILAN
+		p->format = AVB_AAF_FORMAT_INT_32BIT;
+		p->nsr = AVB_AAF_PCM_NSR_48KHZ;
+		p->bit_depth = 32;
+		p->chan_per_frame = 8;
+		p->sp = 0;
+		p->event = 0;
+		p->seq_num = 0;
+		p->data_len = htons(payload_size);
+#else
 		p->tag = 0x1;
 		p->channel = 0x1f;
 		p->tcode = 0xa;
@@ -206,6 +239,8 @@ static void setup_pdu(struct stream *stream)
 		p->format_id = 0x10;
 		p->fdf = 0x2;
 		p->syt = htons(0x0008);
+		p->data_len = htons(payload_size+8);
+#endif
 	}
 	stream->hdr_size = hdr_size;
 	stream->payload_size = payload_size;
@@ -361,6 +396,8 @@ struct stream *server_create_stream(struct server *server,
 		htons(AVB_MSRP_TSPEC_MAX_INTERVAL_FRAMES_DEFAULT);
 	stream->talker_attr->attr.talker.priority = stream->prio;
 	stream->talker_attr->attr.talker.rank = AVB_MSRP_RANK_DEFAULT;
+
+	// TODO Figure a way to retrieve such a value.
 	stream->talker_attr->attr.talker.accumulated_latency = htonl(95);
 
 	return stream;
