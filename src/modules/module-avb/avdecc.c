@@ -35,7 +35,12 @@
 #include "utils.h"
 
 #define DEFAULT_INTERVAL_S	0
-#define DEFAULT_INTERVAL_NS	500000000
+#if USE_MILAN
+	// Milan ACMP timeouts are at 200ms
+	#define DEFAULT_INTERVAL_NS 100000000
+#else
+	#define DEFAULT_INTERVAL_NS	500000000
+#endif
 
 #define server_emit(s,m,v,...) spa_hook_list_call(&s->listener_list, struct server_events, m, v, ##__VA_ARGS__)
 #define server_emit_destroy(s)		server_emit(s, destroy, 0)

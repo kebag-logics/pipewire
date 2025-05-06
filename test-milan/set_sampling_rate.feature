@@ -9,3 +9,5 @@ When The sample rate for the audio unit is changed to the non-default sample rat
 Then Hive Controller no. 1 shows the new sample rate
     And Hive Controller no. 2 reports the sample rate change
     And the AEM unsolicited responses counter in Hive Controller no. 2 is increased by 1
+
+# TODO: Add tests for locked entity and negative tests: out of bounds, ADP multicast address
