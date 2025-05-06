@@ -1042,7 +1042,6 @@ done:
 	uint16_t flags;
 
 	memcpy(buf, m, len);
-
 	talker_guid = htobe64(p->talker_guid);
 	talker_unique_id = htobe64(reply->talker_unique_id);
 	flags = ntohs(reply->flags);
@@ -1111,6 +1110,7 @@ static int handle_connect_tx_response(struct acmp *acmp,
 		be64toh(resp->listener_guid));
 	int evt = AECP_MILAN_ACMP_EVT_RCV_PROBE_TX_RESP;
 
+	memcpy(buf, m, len);
 	// At this state there should be a state machine from the rcv_bind_rx_cmd
 	if (!fsm) {
 		pw_log_info("connect_tx_resp: Creating new state machine for"
@@ -1194,10 +1194,10 @@ static int handle_disconnect_tx_command(struct acmp *acmp, uint64_t now,
 	int status = AVB_ACMP_STATUS_SUCCESS;
 	struct stream *stream;
 
+	memcpy(buf, m, len);
 	if (be64toh(p->talker_guid) != server->entity_id)
 		return 0;
 
-	memcpy(buf, m, len);
 	stream = server_find_stream(server, SPA_DIRECTION_OUTPUT,
 			reply->talker_unique_id);
 	if (stream == NULL) {
@@ -1227,7 +1227,6 @@ static int handle_disconnect_tx_response(struct acmp *acmp, uint64_t now,
 	uint16_t sequence_id;
 	struct stream *stream;
 	int res;
-
 
 	memcpy(buf, m, len);
 	if (be64toh(resp->talker_guid) != server->entity_id)
