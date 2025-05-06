@@ -185,7 +185,7 @@ int aecp_aem_get_state_var(struct aecp* aecp, uint64_t target_id,
     int rc;
     struct aem_state_var_info *inf;
 
-    pw_log_info("get: aecm state for %lx type %d getter\n", target_id, type);
+    pw_log_debug("get: aecm state for %lx type %d getter\n", target_id, type);
     if ((type >= aecp_aem_max) || (type <= aecp_aem_min)) {
         pw_log_error("get: aecp state type %u is not supported\n", type);
         spa_assert(0);

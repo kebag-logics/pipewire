@@ -95,16 +95,32 @@ static int flush_write(struct stream *stream, uint64_t current_time)
 	int pdu_count;
 	ssize_t n;
 	struct avb_frame_header *h = (void*)stream->pdu;
+#ifdef USE_MILAN
+	struct avb_packet_aaf *p = SPA_PTROFF(h, sizeof(*h), void);
+#else
 	struct avb_packet_iec61883 *p = SPA_PTROFF(h, sizeof(*h), void);
 	uint8_t dbc;
+#endif
 
 	avail = spa_ringbuffer_get_read_index(&stream->ring, &index);
 
 	pdu_count = (avail / stream->stride) / stream->frames_per_pdu;
-
+	if (!pdu_count) {
+		pw_log_error("not enough\n");
+		return 0;
+	}
+	// the t_uncertainty is 0 for now
 	txtime = current_time + stream->t_uncertainty;
 	ptime = txtime + stream->mtt;
+	if (!stream->starttime) {
+		stream->starttime = ptime;
+	} else {
+		stream->starttime += stream->mtt;
+	}
+#ifdef USE_MILAN
+#else
 	dbc = stream->dbc;
+#endif
 
 	while (pdu_count--) {
 		*(uint64_t*)CMSG_DATA(stream->cmsg) = txtime;
@@ -117,8 +133,12 @@ static int flush_write(struct stream *stream, uint64_t current_time)
 
 		p->seq_num = stream->pdu_seq++;
 		p->tv = 1;
-		p->timestamp = ptime;
+		// the timestamp is not 64 but 32 bit, there will be some head trunc
+		p->timestamp = htonl(stream->starttime); // use to be ptime
+#ifdef USE_MILAN
+#else
 		p->dbc = dbc;
+#endif // USE_MILAN
 
 		n = sendmsg(stream->source->fd, &stream->msg, MSG_NOSIGNAL);
 		if (n < 0 || n != (ssize_t)stream->pdu_size) {
@@ -128,9 +148,16 @@ static int flush_write(struct stream *stream, uint64_t current_time)
 		txtime += stream->pdu_period;
 		ptime += stream->pdu_period;
 		index += stream->payload_size;
+		stream->starttime += stream->pdu_period;
+#ifdef USE_MILAN
+#else
 		dbc += stream->frames_per_pdu;
+#endif
 	}
+#ifdef USE_MILAN
+#else
 	stream->dbc = dbc;
+#endif // USE_MILAN
 	spa_ringbuffer_read_update(&stream->ring, index);
 	return 0;
 }
@@ -142,6 +169,7 @@ static void on_sink_stream_process(void *data)
 	struct spa_data *d;
 	int32_t filled;
 	uint32_t index, offs, avail, size;
+	uint64_t time_now;
 	struct timespec now;
 
 	if ((buf = pw_stream_dequeue_buffer(stream->stream)) == NULL) {
@@ -169,15 +197,23 @@ static void on_sink_stream_process(void *data)
 		spa_ringbuffer_write_update(&stream->ring, index);
 	}
 	pw_stream_queue_buffer(stream->stream, buf);
-
 	clock_gettime(CLOCK_TAI, &now);
-	flush_write(stream, SPA_TIMESPEC_TO_NSEC(&now));
+
+	time_now = SPA_TIMESPEC_TO_NSEC(&now);
+
+
+	flush_write(stream, time_now);
 }
 
 static void setup_pdu(struct stream *stream)
 {
+	// This should be dependant on the AEM description of the stream.
 	struct avb_frame_header *h;
+#ifdef USE_MILAN
+	struct avb_packet_aaf *p;
+#else
 	struct avb_packet_iec61883 *p;
+#endif
 	ssize_t payload_size, hdr_size, pdu_size;
 
 	spa_memzero(stream->pdu, sizeof(stream->pdu));
@@ -193,10 +229,20 @@ static void setup_pdu(struct stream *stream)
 	h->etype = htons(0x22f0);
 
 	if (stream->direction == SPA_DIRECTION_OUTPUT) {
-		p->subtype = AVB_SUBTYPE_61883_IIDC;
+		p->subtype = AVB_SUBTYPE_AAF;
 		p->sv = 1;
 		p->stream_id = htobe64(stream->id);
-		p->data_len = htons(payload_size+8);
+
+#ifdef USE_MILAN
+		p->format = AVB_AAF_FORMAT_INT_32BIT;
+		p->nsr = AVB_AAF_PCM_NSR_48KHZ;
+		p->bit_depth = 32;
+		p->chan_per_frame = 8;
+		p->sp = 0;
+		p->event = 0;
+		p->seq_num = 0;
+		p->data_len = htons(payload_size);
+#else
 		p->tag = 0x1;
 		p->channel = 0x1f;
 		p->tcode = 0xa;
@@ -206,6 +252,8 @@ static void setup_pdu(struct stream *stream)
 		p->format_id = 0x10;
 		p->fdf = 0x2;
 		p->syt = htons(0x0008);
+		p->data_len = htons(payload_size+8);
+#endif
 	}
 	stream->hdr_size = hdr_size;
 	stream->payload_size = payload_size;
@@ -344,6 +392,7 @@ struct stream *server_create_stream(struct server *server,
 			params, n_params)) < 0)
 		goto error_free_stream;
 
+	// TODO find this from the descriptor
 	stream->frames_per_pdu = 6;
 	stream->pdu_period = SPA_NSEC_PER_SEC * stream->frames_per_pdu /
                           stream->info.info.raw.rate;
@@ -356,12 +405,16 @@ struct stream *server_create_stream(struct server *server,
 	stream->talker_attr = avb_msrp_attribute_new(server->msrp,
 			AVB_MSRP_ATTRIBUTE_TYPE_TALKER_ADVERTISE);
 	stream->talker_attr->attr.talker.vlan_id = htons(stream->vlan_id);
-	stream->talker_attr->attr.talker.tspec_max_frame_size = htons(32 + stream->frames_per_pdu * stream->stride);
+	// TODO fix, make sure to only use the necessary bandwidth
+	// TODO test and change for sizeof(struct avb_packet_aaf)
+	stream->talker_attr->attr.talker.tspec_max_frame_size = htons(24 + 1 + stream->frames_per_pdu * stream->stride);
 	stream->talker_attr->attr.talker.tspec_max_interval_frames =
 		htons(AVB_MSRP_TSPEC_MAX_INTERVAL_FRAMES_DEFAULT);
 	stream->talker_attr->attr.talker.priority = stream->prio;
 	stream->talker_attr->attr.talker.rank = AVB_MSRP_RANK_DEFAULT;
-	stream->talker_attr->attr.talker.accumulated_latency = htonl(95);
+
+	// TODO Figure a way to retrieve such a value., this is too low
+	stream->talker_attr->attr.talker.accumulated_latency = htonl(130829);
 
 	return stream;
 
@@ -586,9 +639,6 @@ int stream_activate(struct stream *stream, uint64_t now)
 	} else {
 		if ((res = avb_maap_get_address(server->maap, stream->addr, stream->index)) < 0)
 			return res;
-		stream->listener_attr->attr.listener.stream_id = htobe64(stream->id);
-		stream->listener_attr->param = AVB_MSRP_LISTENER_PARAM_IGNORE;
-		avb_mrp_attribute_begin(stream->listener_attr->mrp, now);
 
 		stream->talker_attr->attr.talker.stream_id = htobe64(stream->id);
 		memcpy(stream->talker_attr->attr.talker.dest_addr, stream->addr, 6);
@@ -599,6 +649,11 @@ int stream_activate(struct stream *stream, uint64_t now)
 		memcpy(h->src, server->mac_addr, 6);
 		avb_mrp_attribute_begin(stream->talker_attr->mrp, now);
 		avb_mrp_attribute_join(stream->talker_attr->mrp, now, true);
+		stream->starttime = 0;
+		// TODO retrieve the presentation time, for now the defaault is 2ms
+		stream->mtt = AVB_MILAN_MAX_PTO;
+		// TODO retrieve a way to get the average system latency and multiply it by 2.
+		stream->t_uncertainty = AVB_STREAM_T_UNCERTAINTY;
 	}
 	pw_stream_set_active(stream->stream, true);
 	return 0;

@@ -1,5 +1,7 @@
 /* AVB support */
 /* SPDX-FileCopyrightText: Copyright © 2022 Wim Taymans */
+/* SPDX-FileCopyrightText: Copyright © 2025 Kebag-Logic */
+/* SPDX-FileCopyrightText: Copyright © 2025 Alexandre Malki <alexandre.malki@kebag-logic.com> */
 /* SPDX-License-Identifier: MIT */
 
 #ifndef AVB_STREAM_H
@@ -15,8 +17,21 @@
 
 #include <pipewire/pipewire.h>
 
-#define BUFFER_SIZE	(1u<<16)
+#define BUFFER_SIZE	(1u<<17)
 #define BUFFER_MASK	(BUFFER_SIZE-1)
+
+// Milan TODO
+#define AVB_MILAN_MAX_PTO	2000000
+
+/**
+ * The t uncertainty is a representation of the realtimeness of the system
+ * running PW, the issue is the following:
+ *  * Because pipewire assume the packet for a frame a linearly send for mulitple
+ * 		audio frame, it happens that on 2 consecutive process_stream, the time,
+ * 		has slow down a bit, and the ETF would complain about not having space.asm
+ *  * This should be measured empirically.
+ */
+#define AVB_STREAM_T_UNCERTAINTY	2000000
 
 struct stream {
 	struct spa_list link;
@@ -36,6 +51,7 @@ struct stream {
 	struct spa_source *source;
 	int prio;
 	int vlan_id;
+	uint64_t starttime;
 	int mtt;
 	int t_uncertainty;
 	uint32_t frames_per_pdu;
@@ -48,6 +64,7 @@ struct stream {
 	int64_t pdu_period;
 	uint8_t pdu_seq;
 	uint8_t prev_seq;
+	uint64_t send_time;
 	uint8_t dbc;
 
 	struct iovec iov[3];

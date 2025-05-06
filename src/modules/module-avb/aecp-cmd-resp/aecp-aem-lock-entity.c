@@ -152,7 +152,7 @@ int handle_unsol_lock_entity(struct aecp *aecp, int64_t now)
 	uint64_t target_id = aecp->server->entity_id;
 
 #ifdef USE_MILAN
-	pw_log_info("Handling unsolicited notification for the lock command\n");
+	pw_log_debug("Handling unsolicited notification for the lock command\n");
 	rc = aecp_aem_get_state_var(aecp, target_id, aecp_aem_lock, 0, &lock);
 	if (rc) {
 		pw_log_error("while getting lock in the unsol lock callback\n");
@@ -161,7 +161,7 @@ int handle_unsol_lock_entity(struct aecp *aecp, int64_t now)
 
 	has_expired = (now > lock.base_info.expire_timeout);
 	if (!lock.base_info.needs_update && !has_expired) {
-		pw_log_info("No need for update exp %ld now %ld\n",
+		pw_log_debug("No need for update exp %ld now %ld\n",
 				    lock.base_info.expire_timeout, now);
 		return 0;
 	}

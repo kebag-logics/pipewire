@@ -1,5 +1,7 @@
 /* AVB support */
 /* SPDX-FileCopyrightText: Copyright © 2022 Wim Taymans */
+/* SPDX-FileCopyrightText: Copyright © 2025 Kebag-Logic */
+/* SPDX-FileCopyrightText: Copyright © 2025 Alexandre Malki <alexandre.malki@kebag-logic.com> */
 /* SPDX-License-Identifier: MIT */
 
 #ifndef AVB_MRP_H
@@ -80,30 +82,114 @@ struct avb_packet_mrp_footer {
 #define AVB_MRP_EVENT_LVA_TIMER		18
 
 /* attribute events */
-#define AVB_MRP_ATTRIBUTE_EVENT_NEW	0
+#define AVB_MRP_ATTRIBUTE_EVENT_NEW		0
 #define AVB_MRP_ATTRIBUTE_EVENT_JOININ	1
-#define AVB_MRP_ATTRIBUTE_EVENT_IN	2
+#define AVB_MRP_ATTRIBUTE_EVENT_IN		2
 #define AVB_MRP_ATTRIBUTE_EVENT_JOINMT	3
-#define AVB_MRP_ATTRIBUTE_EVENT_MT	4
-#define AVB_MRP_ATTRIBUTE_EVENT_LV	5
-#define AVB_MRP_ATTRIBUTE_EVENT_LVA	6
+#define AVB_MRP_ATTRIBUTE_EVENT_MT		4
+#define AVB_MRP_ATTRIBUTE_EVENT_LV		5
+#define AVB_MRP_ATTRIBUTE_EVENT_LVA		6
 
-#define AVB_MRP_SEND_NEW		1
-#define AVB_MRP_SEND_JOININ		2
-#define AVB_MRP_SEND_IN			3
-#define AVB_MRP_SEND_JOINMT		4
-#define AVB_MRP_SEND_MT			5
-#define AVB_MRP_SEND_LV			6
+#define AVB_MRP_SEND_NEW		0
+#define AVB_MRP_SEND_JOININ		1
+#define AVB_MRP_SEND_IN			2
+#define AVB_MRP_SEND_JOINMT		3
+#define AVB_MRP_SEND_MT			4
+#define AVB_MRP_SEND_LV			5
+#define AVB_MRP_SEND_LVA		6
 
 #define AVB_MRP_NOTIFY_NEW		1
 #define AVB_MRP_NOTIFY_JOIN		2
-#define AVB_MRP_NOTIFY_LEAVE		3
+#define AVB_MRP_NOTIFY_LEAVE	3
+
+
+// The generated array of string pointers (using the abbreviations)
+static const char *mrp_applicant_state_char[] = {
+    /* [AVB_MRP_VO] = */ "VO",
+    /* [AVB_MRP_VP] = */ "VP",
+    /* [AVB_MRP_VN] = */ "VN",
+    /* [AVB_MRP_AN] = */ "AN",
+    /* [AVB_MRP_AA] = */ "AA",
+    /* [AVB_MRP_QA] = */ "QA",
+    /* [AVB_MRP_LA] = */ "LA",
+    /* [AVB_MRP_AO] = */ "AO",
+    /* [AVB_MRP_QO] = */ "QO",
+    /* [AVB_MRP_AP] = */ "AP",
+    /* [AVB_MRP_QP] = */ "QP",
+    /* [AVB_MRP_LO] = */ "LO",
+    // If you wanted an entry for the count itself:
+    // /* [AVB_MRP_APPLICANT_STATE_COUNT] = */ NULL // Or "unknown_state"
+};
+
+
+// The generated array of string pointers using designated initializers.
+// Array elements for indices 0-15 will be implicitly initialized to NULL.
+static const char *mrp_registrar_state_char[] = {
+    [AVB_MRP_IN] = "IN",    // Initialize index 16
+    [AVB_MRP_LV] = "LV",    // Initialize index 17
+    [AVB_MRP_MT] = "MT",    // Initialize index 18
+};
+
+static const char *mrp_event_char[] = {
+    /* [AVB_MRP_EVENT_BEGIN]     = */ "begin",
+    /* [AVB_MRP_EVENT_NEW]       = */ "new",
+    /* [AVB_MRP_EVENT_JOIN]      = */ "join",
+    /* [AVB_MRP_EVENT_LV]        = */ "lv",
+    /* [AVB_MRP_EVENT_TX]        = */ "tx",
+    /* [AVB_MRP_EVENT_TX_LVA]    = */ "tx_lva",
+    /* [AVB_MRP_EVENT_TX_LVAF]   = */ "tx_lvaf",
+    /* [AVB_MRP_EVENT_RX_NEW]    = */ "rx_new",
+    /* [AVB_MRP_EVENT_RX_JOININ] = */ "rx_joinin",
+    /* [AVB_MRP_EVENT_RX_IN]     = */ "rx_in",
+    /* [AVB_MRP_EVENT_RX_JOINMT] = */ "rx_joinmt",
+    /* [AVB_MRP_EVENT_RX_MT]     = */ "rx_mt",
+    /* [AVB_MRP_EVENT_RX_LV]     = */ "rx_lv",
+    /* [AVB_MRP_EVENT_RX_LVA]    = */ "rx_lva",
+    /* [AVB_MRP_EVENT_FLUSH]     = */ "flush",
+    /* [AVB_MRP_EVENT_REDECLARE] = */ "redeclare",
+    /* [AVB_MRP_EVENT_PERIODIC]  = */ "periodic",
+    /* [AVB_MRP_EVENT_LV_TIMER]  = */ "lv_timer",
+    /* [AVB_MRP_EVENT_LVA_TIMER] = */ "lva_timer",
+    // Optional: Add a NULL or "unknown" entry for safety if needed,
+    // corresponding to AVB_MRP_EVENT_COUNT
+    /* [AVB_MRP_EVENT_COUNT]     = */ NULL // Or "unknown_event"
+};
+
+static const char *mrp_attribute_event_char[] = {
+    /* [AVB_MRP_ATTRIBUTE_EVENT_NEW]    = */ "new",
+    /* [AVB_MRP_ATTRIBUTE_EVENT_JOININ] = */ "joinin",
+    /* [AVB_MRP_ATTRIBUTE_EVENT_IN]     = */ "in",
+    /* [AVB_MRP_ATTRIBUTE_EVENT_JOINMT] = */ "joinmt",
+    /* [AVB_MRP_ATTRIBUTE_EVENT_MT]     = */ "mt",
+    /* [AVB_MRP_ATTRIBUTE_EVENT_LV]     = */ "lv",
+    /* [AVB_MRP_ATTRIBUTE_EVENT_LVA]    = */ "lva",
+    // Optional: Add a NULL or "unknown" entry for safety if needed,
+    // corresponding to AVB_MRP_ATTRIBUTE_EVENT_COUNT
+    /* [AVB_MRP_ATTRIBUTE_EVENT_COUNT]  = */ NULL // Or "unknown_attribute_event"
+};
+
+static const char *mrp_send_char[] = {
+    /* [AVB_MRP_SEND_NEW]       = */ "new",
+    /* [AVB_MRP_SEND_JOININ]    = */ "joinin",
+    /* [AVB_MRP_SEND_IN]        = */ "in",
+    /* [AVB_MRP_SEND_JOINMT]    = */ "joinmt",
+    /* [AVB_MRP_SEND_MT]        = */ "mt",
+    /* [AVB_MRP_SEND_LV]        = */ "lv",
+};
+
+static const char *mrp_notify_char[] = {
+								NULL,
+    /* [AVB_MRP_NOTIFY_NEW]      = */ "new",
+    /* [AVB_MRP_NOTIFY_JOIN]     = */ "join",
+    /* [AVB_MRP_NOTIFY_LEAVE]    = */ "leave",
+};
 
 const char *avb_mrp_notify_name(uint8_t notify);
 const char *avb_mrp_send_name(uint8_t send);
 
 struct avb_mrp_attribute {
 	uint8_t pending_send;
+	const char *name;
 	void *user_data;
 };
 
