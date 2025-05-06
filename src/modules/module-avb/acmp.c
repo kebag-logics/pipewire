@@ -120,31 +120,38 @@ static struct fsm_state_listener *acmp_fsm_find(struct acmp *acmp, int type, uin
 
 struct listener_fsm_cmd {
 	int (*state_handler) (struct acmp *, struct fsm_state_listener *,
-							void *, size_t, int64_t);
+							const void *, size_t, int64_t);
 };
 
 /** Milan v1.2, Sec. 5.5.3.5.3 */
-int handle_fsm_unbound_rcv_bind_rx_cmd_evt(struct acmp *acmp, struct fsm_state_listener *info, void *m, size_t len, int64_t now)
+int handle_fsm_unbound_rcv_bind_rx_cmd_evt(struct acmp *acmp,
+	struct fsm_state_listener *info, const void *m, size_t len, int64_t now)
 {
+	uint8_t buf[512];
+	struct server *server = acmp->server;
+	struct avb_ethernet_header *h = (struct avb_ethernet_header *)buf;
+	struct avb_packet_acmp *p = SPA_PTROFF(m, sizeof(*h), void);
+	struct avb_packet_acmp *reply = SPA_PTROFF(h, sizeof(*h), void);
+	uint16_t flags = 0;
+	uint8_t res;
+
+	memcpy(buf, m, len);
+
 	pw_log_info("Responding to a bind_rx_command %zu", len);
 	if (len == 0){
 		pw_log_info("Len is: %zu", len);
 		spa_assert(0);
 	}
-	struct server *server = acmp->server;
-	const struct avb_ethernet_header *h = m;
-	const struct avb_packet_acmp *p = SPA_PTROFF(m, sizeof(*h), void);
-	struct avb_packet_acmp *reply = SPA_PTROFF(h, sizeof(*h), void);
-	uint16_t flags = 0;
-	uint8_t res;
-
 
 	/* 1. Check if locked */
 	pw_log_info("1. Check if locked");
 	if (be64toh(p->listener_guid) != server->entity_id) {
 		pw_log_info("Entity is locked.");
-		AVB_PACKET_ACMP_SET_MESSAGE_TYPE(reply, AVB_ACMP_MESSAGE_TYPE_CONNECT_RX_RESPONSE);
-		AVB_PACKET_ACMP_SET_STATUS(reply, AVB_ACMP_STATUS_CONTROLLER_NOT_AUTHORIZED);
+		AVB_PACKET_ACMP_SET_MESSAGE_TYPE(reply,
+			AVB_ACMP_MESSAGE_TYPE_CONNECT_RX_RESPONSE);
+
+		AVB_PACKET_ACMP_SET_STATUS(reply,
+			AVB_ACMP_STATUS_CONTROLLER_NOT_AUTHORIZED);
 		res = avb_server_send_packet(server, h->dest, AVB_TSN_ETH, h, len);
 		return 0;
 	}
@@ -161,7 +168,7 @@ int handle_fsm_unbound_rcv_bind_rx_cmd_evt(struct acmp *acmp, struct fsm_state_l
 	AVB_PACKET_ACMP_SET_STATUS(reply, AVB_ACMP_STATUS_SUCCESS);
 
 	info->connection_count = 1;
-	
+
 	reply->connection_count = htons(info->connection_count);
 
 	// Set flags
@@ -181,7 +188,9 @@ int handle_fsm_unbound_rcv_bind_rx_cmd_evt(struct acmp *acmp, struct fsm_state_l
 
 	/* 5. Send PROBE_TX_COMMAND */
 	pw_log_info("5. Send PROBE_TX_COMMAND");
-	AVB_PACKET_ACMP_SET_MESSAGE_TYPE(reply, AVB_ACMP_MESSAGE_TYPE_CONNECT_TX_COMMAND);
+	AVB_PACKET_ACMP_SET_MESSAGE_TYPE(reply,
+				AVB_ACMP_MESSAGE_TYPE_CONNECT_TX_COMMAND);
+
 	AVB_PACKET_ACMP_SET_STATUS(reply, AVB_ACMP_STATUS_SUCCESS);
 	// TODO: Global sequence id counter?
 	// TODO: Replace magic numbers
@@ -218,41 +227,42 @@ int handle_fsm_unbound_rcv_bind_rx_cmd_evt(struct acmp *acmp, struct fsm_state_l
 
 /** Milan v1.2 5.5.3.5.4 */
 int handle_fsm_unbound_rcv_get_rx_state_evt(struct acmp *acmp,
-	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
+	struct fsm_state_listener *info, const void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.5 */
 int handle_fsm_unbound_rcv_unbind_rx_cmd_evt(struct acmp *acmp,
-	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
+	struct fsm_state_listener *info, const void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.6 */
 int handle_fsm_prb_w_avail_rcv_bind_rx_cmd_evt(struct acmp *acmp,
-	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
+	struct fsm_state_listener *info, const void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.7 */
 int handle_fsm_prb_w_avail_rcv_get_rx_state_evt(struct acmp *acmp,
-	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
+	struct fsm_state_listener *info, const void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.8 */
 int handle_fsm_prb_w_avail_rcv_unbind_rx_cmd_evt(struct acmp *acmp,
-	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
+	struct fsm_state_listener *info, const void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.9 */
-int handle_fsm_prb_w_avail_evt_tk_discovered_evt(struct acmp *acmp,struct fsm_state_listener *info, void *m, size_t len,
+int handle_fsm_prb_w_avail_evt_tk_discovered_evt(struct acmp *acmp,
+	struct fsm_state_listener *info, const void *m, size_t len,
 	int64_t now)
 {
 	return 0;
@@ -260,102 +270,115 @@ int handle_fsm_prb_w_avail_evt_tk_discovered_evt(struct acmp *acmp,struct fsm_st
 
 /** Milan v1.2 5.5.3.5.10 */
 int handle_fsm_prb_w_delay_tmr_delay_evt(struct acmp *acmp,
-	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
+	struct fsm_state_listener *info, const void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.11 */
 int handle_fsm_prb_w_delay_rcv_bind_rx_cmd_evt(struct acmp *acmp,
-	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
+	struct fsm_state_listener *info, const void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.12 */
 int handle_fsm_prb_w_delay_rcv_get_rx_state_evt(struct acmp *acmp,
-	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
+	struct fsm_state_listener *info, const void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.13 */
 int handle_fsm_prb_w_delay_rcv_unbind_rx_cmd_evt(struct acmp *acmp,
-	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
+	struct fsm_state_listener *info, const void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.14 */
 int handle_fsm_prb_w_delay_evt_tk_discovered_evt(struct acmp *acmp,
-	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
+	struct fsm_state_listener *info, const void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.15 */
 int handle_fsm_prb_w_delay_evt_tk_departed_evt(struct acmp *acmp,
-	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
+	struct fsm_state_listener *info, const void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.16 */
 int handle_fsm_prb_w_resp_tmr_no_resp_evt(struct acmp *acmp,
-	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
+	struct fsm_state_listener *info, const void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.17 */
 int handle_fsm_prb_w_resp_rcv_bind_rx_cmd_evt(struct acmp *acmp,
-	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
+	struct fsm_state_listener *info, const void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2, Sec. 5.5.3.5.18 */
 int handle_fsm_prb_w_resp_rcv_probe_tx_resp_evt(struct acmp *acmp,
-	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
+	struct fsm_state_listener *info, const void *m, size_t len, int64_t now)
 {
-	pw_log_info("fsm_prb_w_resp_rcv_probe_tx_resp_evt");
-
+	uint8_t buf[512];
 	struct server *server = acmp->server;
-	const struct avb_ethernet_header *h = m;
-	const struct avb_packet_acmp *p = SPA_PTROFF(m, sizeof(*h), void);
+	struct avb_ethernet_header *h = (struct avb_ethernet_header *)buf;
+	struct avb_packet_acmp *p = SPA_PTROFF(m, sizeof(*h), void);
 	// struct avb_packet_acmp *reply = SPA_PTROFF(h, sizeof(*h), void);
 	struct stream *stream;
-	uint16_t flags = info->flags;
-	uint8_t res;
+	uint64_t rcvd_controller_entity_id;
+	uint64_t rcvd_talker_entitiy_id;
+	uint16_t rcvd_talker_unique_id;
+	uint16_t rcvd_sequence_id;
 
-	/* 1. Check controller_entity_id, talker_entity_id, talker_unique_id and sequence_id of sent PROBE_TX_COMMAND*/
-	pw_log_info("1. Check controller_entity_id, talker_entity_id, talker_unique_id and sequence_id");
+	pw_log_info("fsm_prb_w_resp_rcv_probe_tx_resp_evt");
 
-	uint64_t rcvd_controller_entity_id = be64toh(p->controller_guid);
-	uint64_t rcvd_talker_entitiy_id = be64toh(p->talker_guid);
-	uint16_t rcvd_talker_unique_id = ntohs(p->talker_unique_id);
-	uint16_t rcvd_sequence_id = ntohs(p->sequence_id);
+	/* 1. Check controller_entity_id, talker_entity_id,
+		talker_unique_id and sequence_id of sent PROBE_TX_COMMAND */
+	pw_log_info("1. Check controller_entity_id, talker_entity_id,"
+				" talker_unique_id and sequence_id");
 
-	if (info->binding_parameters.controller_entity_id != rcvd_controller_entity_id){
-		pw_log_info("Controller entity IDs not matching. Received: 0x%" PRIx64 ", expected: 0x%" PRIx64,
-			rcvd_controller_entity_id, info->binding_parameters.controller_entity_id);
+	memcpy(buf, m, len);
+	rcvd_controller_entity_id = be64toh(p->controller_guid);
+	rcvd_talker_entitiy_id = be64toh(p->talker_guid);
+	rcvd_talker_unique_id = ntohs(p->talker_unique_id);
+	rcvd_sequence_id = ntohs(p->sequence_id);
+
+	if (info->binding_parameters.controller_entity_id
+			!= rcvd_controller_entity_id){
+
+		pw_log_info("Controller entity IDs not matching. Received: 0x%" PRIx64
+					", expected: 0x%" PRIx64,
+					rcvd_controller_entity_id,
+					info->binding_parameters.controller_entity_id);
 		spa_assert(0);
 		return 0;
 	}
 	if (info->binding_parameters.talker_entity_id != rcvd_talker_entitiy_id){
-		pw_log_info("Talker entity IDs not matching. Received: 0x%" PRIx64 ", expected: 0x%" PRIx64,
+		pw_log_info("Talker entity IDs not matching. Received: 0x%" PRIx64
+			", expected: 0x%" PRIx64,
 			rcvd_talker_entitiy_id, info->binding_parameters.talker_entity_id);
 		spa_assert(0);
 		return 0;
 	}
 	if (info->binding_parameters.talker_unique_id != rcvd_talker_unique_id){
-		pw_log_info("Talker unique IDs not matching. Received: 0x%" PRIx16 ", expected: 0x%" PRIx16,
+		pw_log_info("Talker unique IDs not matching. Received: 0x%" PRIx16
+			 ", expected: 0x%" PRIx16,
 			rcvd_talker_unique_id, info->binding_parameters.talker_unique_id);
 		spa_assert(0);
 		return 0;
 	}
 	if (info->binding_parameters.sequence_id != rcvd_sequence_id){
-		pw_log_info("Sequence IDs not matching. Received: 0x%" PRIx16 ", expected: 0x%" PRIx16,
+		pw_log_info("Sequence IDs not matching. Received: 0x%" PRIx16
+			",expected: 0x%" PRIx16,
 			rcvd_sequence_id, info->binding_parameters.sequence_id);
 		spa_assert(0);
 		return 0;
@@ -365,14 +388,15 @@ int handle_fsm_prb_w_resp_rcv_probe_tx_resp_evt(struct acmp *acmp,
 	pw_log_info("2. Stop the TMR_NO_RESP timer");
 		// Done by design
 
-	/* TODO: 3. If STATUS!=SUCCESS then set TMR_RETRY to 4s. Set the ACMP status to the value of status and go to the PRB_W_RETRY state */
-	
+	/* TODO: 3. If STATUS!=SUCCESS then set TMR_RETRY to 4s. Set the ACMP
+	 status to the value of status and go to the PRB_W_RETRY state */
+
 	/* 4. Note stream_id, stream_dest_mac, stream_vlan_id. */
 	pw_log_info("4. Note stream_id, stream_dest_mac, stream_vlan_id.");
 	info->binding_parameters.stream_id = p->stream_id;
 	memcpy(info->binding_parameters.stream_dest_mac, p->stream_dest_mac, 6);
 	info->binding_parameters.stream_vlan_id = p->stream_vlan_id;
-	
+
 	/* 4. Initiate SRP reservation and  start listening for stream_packets */
 	// TODO: Check this
 	stream = server_find_stream(server, SPA_DIRECTION_INPUT,
@@ -383,13 +407,14 @@ int handle_fsm_prb_w_resp_rcv_probe_tx_resp_evt(struct acmp *acmp,
 	stream->peer_id = be64toh(p->stream_id);
 	memcpy(stream->addr, p->stream_dest_mac, 6);
 	stream_activate(stream, now);
-	
+
 	/* TODO: 4. Start a 10s timer TMR_NO_TK */
 	pw_log_info("4. Start a 10s timer TMR_NO_TK");
 	// info->timeout = now + 10 * SPA_NSEC_PER_SEC;
 
 	/* 4. Set the Probing status to PROBING_COMPLETED and ACMP status to 0 */
-	pw_log_info("4. Set the Probing status to PROBING_COMPLETED and ACMP status to 0");
+	pw_log_info("4. Set the Probing status to PROBING_COMPLETED and ACMP status"
+				" to 0");
 	// TODO: ACMP Status
 	info->probing_status = AVB_MILAN_ACMP_STATUS_PROBING_COMPLETED;
 
@@ -402,169 +427,169 @@ int handle_fsm_prb_w_resp_rcv_probe_tx_resp_evt(struct acmp *acmp,
 
 /** Milan v1.2 5.5.3.5.19 */
 int handle_fsm_prb_w_resp_rcv_get_rx_state_evt(struct acmp *acmp,
-	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
+	struct fsm_state_listener *info, const void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.20 */
 int handle_fsm_prb_w_resp_rcv_unbind_rx_cmd_evt(struct acmp *acmp,
-	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
+	struct fsm_state_listener *info, const void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.21 */
 int handle_fsm_prb_w_resp_evt_tk_discovered_evt(struct acmp *acmp,
-	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
+	struct fsm_state_listener *info, const void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.22 */
 int handle_fsm_prb_w_resp_evt_tk_departed_evt(struct acmp *acmp,
-	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
+	struct fsm_state_listener *info, const void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.23 */
 int handle_fsm_prb_w_resp2_tmr_no_resp_evt(struct acmp *acmp,
-	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
+	struct fsm_state_listener *info, const void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.24 */
 int handle_fsm_prb_w_resp2_rcv_bind_rx_cmd_evt(struct acmp *acmp,
-	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
+	struct fsm_state_listener *info, const void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.25 */
 int handle_fsm_prb_w_resp2_rcv_probe_tx_resp_evt(struct acmp *acmp,
-	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
+	struct fsm_state_listener *info, const void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.26 */
 int handle_fsm_prb_w_resp2_rcv_get_rx_state_evt(struct acmp *acmp,
-	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
+	struct fsm_state_listener *info, const void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.27 */
 int handle_fsm_prb_w_resp2_rcv_unbind_rx_cmd_evt(struct acmp *acmp,
-	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
+	struct fsm_state_listener *info, const void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.28 */
 int handle_fsm_prb_w_resp2_evt_tk_discovered_evt(struct acmp *acmp,
-	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
+	struct fsm_state_listener *info, const void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.29 */
 int handle_fsm_prb_w_resp2_evt_tk_departed_evt(struct acmp *acmp,
-	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
+	struct fsm_state_listener *info, const void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.30 */
 int handle_fsm_prb_w_retry_tmr_retry_evt(struct acmp *acmp,
-	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
+	struct fsm_state_listener *info, const void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.31 */
 int handle_fsm_prb_w_retry_rcv_bind_rx_cmd_evt(struct acmp *acmp,
-	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
+	struct fsm_state_listener *info, const void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.32 */
 int handle_fsm_prb_w_retry_rcv_get_rx_state_evt(struct acmp *acmp,
-	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
+	struct fsm_state_listener *info, const void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.33 */
 int handle_fsm_prb_w_retry_rcv_unbind_rx_cmd_evt(struct acmp *acmp,
-	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
+	struct fsm_state_listener *info, const void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.34 */
 int handle_fsm_prb_w_retry_evt_tk_discovered_evt(struct acmp *acmp,
-	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
+	struct fsm_state_listener *info, const void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.35 */
 int handle_fsm_prb_w_retry_evt_tk_departed_evt(struct acmp *acmp,
-	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
+	struct fsm_state_listener *info, const void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.36 */
 int handle_fsm_settled_no_rsv_tmr_no_tk_evt(struct acmp *acmp,
-	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
+	struct fsm_state_listener *info, const void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.37 */
 int handle_fsm_settled_no_rsv_rcv_bind_rx_cmd_evt(struct acmp *acmp,
-	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
+	struct fsm_state_listener *info, const void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.38 */
 int handle_fsm_settled_no_rsv_rcv_get_rx_state_evt(struct acmp *acmp,
-	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
+	struct fsm_state_listener *info, const void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.39 */
 int handle_fsm_settled_no_rsv_rcv_unbind_rx_cmd_evt(struct acmp *acmp,
-	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
+	struct fsm_state_listener *info, const void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.40 */
 int handle_fsm_settled_no_rsv_evt_tk_discovered_evt(struct acmp *acmp,
-	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
+	struct fsm_state_listener *info, const void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.41 */
 int handle_fsm_settled_no_rsv_evt_tk_departed_evt(struct acmp *acmp,
-	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
+	struct fsm_state_listener *info, const void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2, Sec. 5.5.3.5.42 */
 int handle_fsm_settled_no_rsv_evt_tk_registered_evt(struct acmp *acmp,
-	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
-{	
+	struct fsm_state_listener *info, const void *m, size_t len, int64_t now)
+{
 	// Check for event
 	/* 1. Clear the TMR_NO_TK timer. */
 		// Done by design
@@ -575,43 +600,50 @@ int handle_fsm_settled_no_rsv_evt_tk_registered_evt(struct acmp *acmp,
 
 /** Milan v1.2 5.5.3.5.43 */
 int handle_fsm_settled_rsv_ok_rcv_bind_rx_cmd_evt(struct acmp *acmp,
-	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
+	struct fsm_state_listener *info, const void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.44 */
 int handle_fsm_settled_rsv_ok_rcv_get_rx_state_evt(struct acmp *acmp,
-	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
+	struct fsm_state_listener *info, const void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2, Sec. 5.5.3.5.45 */
 int handle_fsm_settled_rsv_ok_rcv_unbind_rx_cmd_evt(struct acmp *acmp,
-	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
+	struct fsm_state_listener *info, const void *m, size_t len, int64_t now)
 {
+	uint8_t buf[512];
+	struct server *server = acmp->server;
+	struct avb_ethernet_header *h = (struct avb_ethernet_header *)buf;
+	struct avb_packet_acmp *p = SPA_PTROFF(m, sizeof(*h), void);
+	struct avb_packet_acmp *reply = SPA_PTROFF(h, sizeof(*h), void);
+	struct stream *stream;
+	int res;
+
+	memcpy(buf, m, len);
 	pw_log_info("Responding to a bind_rx_command %zu", len);
 	if (len == 0){
+		//FIXME is that necessary?
 		pw_log_info("Len is: %zu", len);
 		spa_assert(0);
 	}
-	struct server *server = acmp->server;
-	const struct avb_ethernet_header *h = m;
-	const struct avb_packet_acmp *p = SPA_PTROFF(m, sizeof(*h), void);
-	struct avb_packet_acmp *reply = SPA_PTROFF(h, sizeof(*h), void);
-	struct stream *stream;
-	uint16_t flags = 0;
-	uint8_t res;
 
 	/* 1. Check if locked */
 	pw_log_info("1. Check if locked");
 	if (be64toh(p->listener_guid) != server->entity_id) {
 		pw_log_info("Entity is locked.");
-		AVB_PACKET_ACMP_SET_MESSAGE_TYPE(reply, AVB_ACMP_MESSAGE_TYPE_DISCONNECT_RX_RESPONSE);
-		AVB_PACKET_ACMP_SET_STATUS(reply, AVB_ACMP_STATUS_CONTROLLER_NOT_AUTHORIZED);
+		AVB_PACKET_ACMP_SET_MESSAGE_TYPE(reply,
+			 AVB_ACMP_MESSAGE_TYPE_DISCONNECT_RX_RESPONSE);
+
+		AVB_PACKET_ACMP_SET_STATUS(reply,
+			AVB_ACMP_STATUS_CONTROLLER_NOT_AUTHORIZED);
+
 		res = avb_server_send_packet(server, h->dest, AVB_TSN_ETH, h, len);
-		return 0;
+		return res;
 	}
 
 	/* 2. Clear SRP parameters and stop SRP */
@@ -619,13 +651,15 @@ int handle_fsm_settled_rsv_ok_rcv_unbind_rx_cmd_evt(struct acmp *acmp,
 	// TODO: Check this
 	stream = server_find_stream(server, SPA_DIRECTION_INPUT,
 		ntohs(p->listener_unique_id));
+
+	// FIXME, sdhouldno we return something different than -1?
 	if (stream == NULL)
 		return 0;
 
 	stream->peer_id = be64toh(p->stream_id);
 	memcpy(stream->addr, p->stream_dest_mac, 6);
 	stream_deactivate(stream, now);
-	
+
 	/* TODO: 3. Stop the ADP Discovery state machine */
 	// TODO: Check this
 	pw_log_info("3. Stop the ADP Discovery state machine");
@@ -636,13 +670,16 @@ int handle_fsm_settled_rsv_ok_rcv_unbind_rx_cmd_evt(struct acmp *acmp,
 	info->flags = 0;
 
 	/* 5. Set the Probing status to PROBING_DISABLED and ACMP status to 0 */
-	pw_log_info("5. Set the Probing status to PROBING_DISABLED and ACMP status to 0");
+	pw_log_info("5. Set the Probing status to PROBING_DISABLED and ACMP status"
+				" to 0");
 	info->probing_status = AVB_MILAN_ACMP_STATUS_PROBING_DISABLED;
 
 	/*TODO: 6. Send a UNBIND_RX_RESPONSE */
 	pw_log_info("6. Send a UNBIND_RX_RESPONSE");
 
-	AVB_PACKET_ACMP_SET_MESSAGE_TYPE(reply, AVB_ACMP_MESSAGE_TYPE_DISCONNECT_RX_RESPONSE);
+	AVB_PACKET_ACMP_SET_MESSAGE_TYPE(reply,
+		AVB_ACMP_MESSAGE_TYPE_DISCONNECT_RX_RESPONSE);
+
 	AVB_PACKET_ACMP_SET_STATUS(reply, AVB_ACMP_STATUS_SUCCESS);
 	reply->talker_guid = 0x0000000000000000;
 	reply->talker_unique_id = 0;
@@ -653,26 +690,26 @@ int handle_fsm_settled_rsv_ok_rcv_unbind_rx_cmd_evt(struct acmp *acmp,
 	res = avb_server_send_packet(server, h->dest, AVB_TSN_ETH, h, len);
 
 	info->current_state = MILAN_ACMP_LISTENER_STA_UNBOUND;
-	return 0;
+	return res;
 }
 
 /** Milan v1.2 5.5.3.5.46 */
 int handle_fsm_settled_rsv_ok_evt_tk_discovered_evt(struct acmp *acmp,
-	struct fsm_state_listener *info, void *m, size_t len, int64_t now)
+	struct fsm_state_listener *info, const void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.47 */
 int handle_fsm_settled_rsv_ok_evt_tk_departed_evt(struct acmp *acmp,
-	 struct fsm_state_listener *info, void *m, size_t len, int64_t now)
+	 struct fsm_state_listener *info, const void *m, size_t len, int64_t now)
 {
 	return 0;
 }
 
 /** Milan v1.2 5.5.3.5.48 */
 int handle_fsm_settled_rsv_ok_evt_tk_unregistered_evt(struct acmp *acmp,
-	 struct fsm_state_listener *info, void *m, size_t len, int64_t now)
+	 struct fsm_state_listener *info, const void *m, size_t len, int64_t now)
 {
 	return 0;
 }
@@ -851,8 +888,10 @@ static const struct listener_fsm_cmd *cmd_listeners_states[MILAN_ACMP_LISTENER_S
 
 #endif // USE_MILAN
 
-static void *stream_talker_fsm_new(struct acmp *acmp, uint32_t type, uint64_t now, uint32_t timeout_ms,
-	const void *m, size_t size)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-function"
+static void *stream_talker_fsm_new(struct acmp *acmp, uint32_t type,
+	uint64_t now, uint32_t timeout_ms, const void *m, size_t size)
 {
 	struct fsm_state_talker *p;
 
@@ -865,6 +904,7 @@ static void *stream_talker_fsm_new(struct acmp *acmp, uint32_t type, uint64_t no
 
 	spa_list_append(&acmp->stream_fsm[type], &p->link);
 }
+#pragma GCC diagnostic pop
 
 static void *stream_listener_fsm_new(struct acmp *acmp, uint32_t type)
 {
@@ -882,8 +922,9 @@ static void *stream_listener_fsm_new(struct acmp *acmp, uint32_t type)
 	return p;
 }
 
-static void *pending_new(struct acmp *acmp, uint32_t type, uint64_t now, uint32_t timeout_ms,
-		const void *m, size_t size)
+#ifndef USE_MILAN
+static void *pending_new(struct acmp *acmp, uint32_t type, uint64_t now,
+	uint32_t timeout_ms, const void *m, size_t size)
 {
 	struct pending *p;
 	struct avb_ethernet_header *h;
@@ -907,8 +948,10 @@ static void *pending_new(struct acmp *acmp, uint32_t type, uint64_t now, uint32_
 
 	return p->ptr;
 }
+#endif // USE_MILAN
 
-static struct pending *pending_find(struct acmp *acmp, uint32_t type, uint16_t sequence_id)
+static struct pending *pending_find(struct acmp *acmp, uint32_t type,
+	uint16_t sequence_id)
 {
 	struct pending *p;
 	spa_list_for_each(p, &acmp->pending[type], link)
@@ -929,7 +972,8 @@ struct msg_info {
 	int (*handle) (struct acmp *acmp, uint64_t now, const void *m, int len);
 };
 
-static int reply_not_supported(struct acmp *acmp, uint8_t type, const void *m, int len)
+static int reply_not_supported(struct acmp *acmp, uint8_t type,
+	 const void *m, int len)
 {
 	struct server *server = acmp->server;
 	uint8_t buf[len];
@@ -943,6 +987,7 @@ static int reply_not_supported(struct acmp *acmp, uint8_t type, const void *m, i
 	return avb_server_send_packet(server, h->src, AVB_TSN_ETH, buf, len);
 }
 
+#ifndef USE_MILAN
 static int retry_pending(struct acmp *acmp, uint64_t now, struct pending *p)
 {
 	struct server *server = acmp->server;
@@ -951,8 +996,10 @@ static int retry_pending(struct acmp *acmp, uint64_t now, struct pending *p)
 	p->last_time = now;
 	return avb_server_send_packet(server, h->dest, AVB_TSN_ETH, p->ptr, p->size);
 }
+#endif // USE_MILAN
 
-static int handle_connect_tx_command(struct acmp *acmp, uint64_t now, const void *m, int len)
+static int handle_connect_tx_command(struct acmp *acmp, uint64_t now,
+	 const void *m, int len)
 {
 	struct server *server = acmp->server;
 	uint8_t buf[256];
@@ -976,7 +1023,8 @@ static int handle_connect_tx_command(struct acmp *acmp, uint64_t now, const void
 
 	// Milan V1.2 5.5.4.1
 
-	AVB_PACKET_ACMP_SET_MESSAGE_TYPE(reply, AVB_ACMP_MESSAGE_TYPE_CONNECT_TX_RESPONSE);
+	AVB_PACKET_ACMP_SET_MESSAGE_TYPE(reply,
+		AVB_ACMP_MESSAGE_TYPE_CONNECT_TX_RESPONSE);
 	reply->stream_id = htobe64(stream->id);
 
 	stream_activate(stream, now);
@@ -1007,7 +1055,9 @@ done:
 	stream = server_find_stream(server, SPA_DIRECTION_OUTPUT,
 		talker_unique_id);
 
-	AVB_PACKET_ACMP_SET_MESSAGE_TYPE(reply, AVB_ACMP_MESSAGE_TYPE_CONNECT_TX_RESPONSE);
+	AVB_PACKET_ACMP_SET_MESSAGE_TYPE(reply,
+		AVB_ACMP_MESSAGE_TYPE_CONNECT_TX_RESPONSE);
+
 	if (stream == NULL) {
 		status = AVB_ACMP_STATUS_TALKER_UNKNOWN_ID;
 		goto done;
@@ -1035,7 +1085,8 @@ done:
 
 /* IEEE 1722.1-2021, Sec. 8.1.1. Connecting a Stream */
 /* Milan v1.2, Sec. 5.5.2.4 Controller Bind, RCV_PROBE_TX_RESP */
-static int handle_connect_tx_response(struct acmp *acmp, uint64_t now, const void *m, int len)
+static int handle_connect_tx_response(struct acmp *acmp,
+	uint64_t now, const void *m, int len)
 {
 	uint8_t buf[256];
 	struct server *server = acmp->server;
@@ -1048,21 +1099,27 @@ static int handle_connect_tx_response(struct acmp *acmp, uint64_t now, const voi
 	int res;
 
 #if USE_MILAN
+	(void) res;
+	(void) pending;
+	(void)sequence_id;
+	(void) stream;
+	(void) server;
+	(void) reply;
 	pw_log_info("HANDLE connect_tx_resp: len: %i", len);
-	uint16_t flags;
-
-	struct listener_fsm_cmd *fcmd;
+	const struct listener_fsm_cmd *fcmd;
 	struct fsm_state_listener *fsm = acmp_fsm_find(acmp, STREAM_LISTENER_FSM,
 		be64toh(resp->listener_guid));
 	int evt = AECP_MILAN_ACMP_EVT_RCV_PROBE_TX_RESP;
 
 	// At this state there should be a state machine from the rcv_bind_rx_cmd
 	if (!fsm) {
-		pw_log_info("connect_tx_resp: Creating new state machine for listener 0x%lx", be64toh(resp->listener_guid));
+		pw_log_info("connect_tx_resp: Creating new state machine for"
+						"listener 0x%lx", be64toh(resp->listener_guid));
 		// Allocate memory for the new FSM state
 		 fsm = stream_listener_fsm_new(acmp, STREAM_LISTENER_FSM);
 		 if (!fsm) {
-			 pw_log_error("Failed to allocate memory for new stream listener state");
+			 pw_log_error("Failed to allocate memory for new stream listener"
+				" state");
 			 return -ENOMEM;
 		 }
 
@@ -1075,24 +1132,20 @@ static int handle_connect_tx_response(struct acmp *acmp, uint64_t now, const voi
 
 		return 0;
 	}
-	pw_log_info("connect_tx_resp: Proceeding with SM for listener 0x%lx.", be64toh(resp->listener_guid));
+	pw_log_info("connect_tx_resp: Proceeding with SM for listener 0x%lx.",
+		 be64toh(resp->listener_guid));
+
 	fcmd = &cmd_listeners_states[fsm->current_state][evt];
 	if (!fcmd || !fcmd->state_handler) {
-		pw_log_error("No valid handler for state %d and event %d", fsm->current_state, evt);
+		pw_log_error("No valid handler for state %d and event %d",
+			fsm->current_state, evt);
+
 		spa_assert(0);
 	}
 	// Handover the parameters
 	fcmd->state_handler(acmp, fsm, m, len, now);
 	return 0;
 #else
-	struct server *server = acmp->server;
-	struct avb_ethernet_header *h;
-	const struct avb_packet_acmp *resp = SPA_PTROFF(m, sizeof(*h), void);
-	struct avb_packet_acmp *reply;
-	struct pending *pending;
-	uint16_t sequence_id;
-	struct stream *stream;
-	int res;
 
 	memcpy(buf, m, len);
 	if (be64toh(resp->listener_guid) != server->entity_id)
@@ -1110,7 +1163,8 @@ static int handle_connect_tx_response(struct acmp *acmp, uint64_t now, const voi
 
 	reply = SPA_PTROFF(h, sizeof(*h), void);
 	reply->sequence_id = htons(pending->old_sequence_id);
-	AVB_PACKET_ACMP_SET_MESSAGE_TYPE(reply, AVB_ACMP_MESSAGE_TYPE_CONNECT_RX_RESPONSE);
+	AVB_PACKET_ACMP_SET_MESSAGE_TYPE(reply,
+		AVB_ACMP_MESSAGE_TYPE_CONNECT_RX_RESPONSE);
 
 	stream = server_find_stream(server, SPA_DIRECTION_INPUT,
 			ntohs(reply->listener_unique_id));
@@ -1129,7 +1183,8 @@ static int handle_connect_tx_response(struct acmp *acmp, uint64_t now, const voi
 #endif
 }
 
-static int handle_disconnect_tx_command(struct acmp *acmp, uint64_t now, const void *m, int len)
+static int handle_disconnect_tx_command(struct acmp *acmp, uint64_t now,
+	const void *m, int len)
 {
 	struct server *server = acmp->server;
 	uint8_t buf[len];
@@ -1150,7 +1205,8 @@ static int handle_disconnect_tx_command(struct acmp *acmp, uint64_t now, const v
 		goto done;
 	}
 
-	AVB_PACKET_ACMP_SET_MESSAGE_TYPE(reply, AVB_ACMP_MESSAGE_TYPE_DISCONNECT_TX_RESPONSE);
+	AVB_PACKET_ACMP_SET_MESSAGE_TYPE(reply,
+		AVB_ACMP_MESSAGE_TYPE_DISCONNECT_TX_RESPONSE);
 
 	stream_deactivate(stream, now);
 
@@ -1159,7 +1215,8 @@ done:
 	return avb_server_send_packet(server, h->dest, AVB_TSN_ETH, buf, len);
 }
 
-static int handle_disconnect_tx_response(struct acmp *acmp, uint64_t now, const void *m, int len)
+static int handle_disconnect_tx_response(struct acmp *acmp, uint64_t now,
+	const void *m, int len)
 {
 	uint8_t buf[256];
 	struct server *server = acmp->server;
@@ -1189,7 +1246,8 @@ static int handle_disconnect_tx_response(struct acmp *acmp, uint64_t now, const 
 
 	reply = SPA_PTROFF(h, sizeof(*h), void);
 	reply->sequence_id = htons(pending->old_sequence_id);
-	AVB_PACKET_ACMP_SET_MESSAGE_TYPE(reply, AVB_ACMP_MESSAGE_TYPE_DISCONNECT_RX_RESPONSE);
+	AVB_PACKET_ACMP_SET_MESSAGE_TYPE(reply,
+		AVB_ACMP_MESSAGE_TYPE_DISCONNECT_RX_RESPONSE);
 
 	stream = server_find_stream(server, SPA_DIRECTION_INPUT,
 			reply->listener_unique_id);
@@ -1207,48 +1265,62 @@ static int handle_disconnect_tx_response(struct acmp *acmp, uint64_t now, const 
 
 /* IEEE 1722.1-2021, Sec. 8.1.1. Connecting a Stream */
 /* Milan v1.2, Sec. 5.5.2.4 Controller Bind, RCV_BIND_RX_CMD */
-// TODO: On the reception of the first bind_rx_cmd, the packet is not processed. Why?
-static int handle_connect_rx_command(struct acmp *acmp, uint64_t now, const void *m, int len)
+// TODO: On the reception of the first bind_rx_cmd, '
+// 			the packet is not processed. Why?
+static int handle_connect_rx_command(struct acmp *acmp, uint64_t now,
+	const void *m, int len)
 {
-	pw_log_info("HANDLE: len: %i", len);
+	uint8_t buf[512];
 	struct server *server = acmp->server;
-	struct avb_ethernet_header *h = m;
+	struct avb_ethernet_header *h = (struct avb_ethernet_header *)buf;
 	const struct avb_packet_acmp *p = SPA_PTROFF(m, sizeof(*h), void);
 	struct avb_packet_acmp *cmd;
 	struct avb_packet_acmp *reply;
 	int res;
 	uint16_t flags;
 
+
+	memcpy(buf, m, len);
+	pw_log_info("HANDLE: len: %i", len);
 	if (be64toh(p->listener_guid) != server->entity_id)
 		return 0;
 
 	pw_log_warn("%s", __func__);
 
 #if USE_MILAN
-	struct listener_fsm_cmd *fcmd;
+	(void)flags;
+	(void)res;
+	(void) reply;
+	(void) cmd;
+	const struct listener_fsm_cmd *fcmd;
 	struct fsm_state_listener *fsm = acmp_fsm_find(acmp, STREAM_LISTENER_FSM,
-				be64toh(p->listener_guid));
+													be64toh(p->listener_guid));
 
 	int evt = AECP_MILAN_ACMP_EVT_RCV_BIND_RX_CMD;
 
 	if (!fsm) {
-		pw_log_info("Creating new state machine for listener 0x%lx", be64toh(p->listener_guid));
+		pw_log_info("Creating new state machine for listener 0x%lx",
+					be64toh(p->listener_guid));
+
 		// Allocate memory for the new FSM state
 		 fsm = stream_listener_fsm_new(acmp, STREAM_LISTENER_FSM);
 		 if (!fsm) {
-			 pw_log_error("Failed to allocate memory for new stream listener state");
+			 pw_log_error("Failed to allocate memory for new stream "
+							"listener state");
 			 return -ENOMEM;
 		 }
-	 
+
 		 // Initialize the new FSM state
 		 fsm->binding_parameters.stream_id = be64toh(p->listener_guid);
 		 fsm->current_state = MILAN_ACMP_LISTENER_STA_UNBOUND;
 		 fsm->timeout = LONG_MAX;
 		 fsm->size = 0;
-	 
+
 		return 0;
 	}
-	pw_log_info("Proceeding with SM for listener 0x%lx.", be64toh(p->listener_guid));
+	pw_log_info("Proceeding with SM for listener 0x%lx.",
+					be64toh(p->listener_guid));
+
 	fcmd = &cmd_listeners_states[fsm->current_state][evt];
 	if (!fcmd) {
 		pw_log_error("Non compatible event for this state, state %d evt id %d",
@@ -1275,42 +1347,51 @@ static int handle_connect_rx_command(struct acmp *acmp, uint64_t now, const void
 	cmd = SPA_PTROFF(h, sizeof(*h), void);
 
 	// TODO: Continue here
-	AVB_PACKET_ACMP_SET_MESSAGE_TYPE(cmd, AVB_ACMP_MESSAGE_TYPE_CONNECT_TX_COMMAND);
+	AVB_PACKET_ACMP_SET_MESSAGE_TYPE(cmd,
+			AVB_ACMP_MESSAGE_TYPE_CONNECT_TX_COMMAND);
+
 	AVB_PACKET_ACMP_SET_STATUS(cmd, AVB_ACMP_STATUS_SUCCESS);
 
 	return avb_server_send_packet(server, h->dest, AVB_TSN_ETH, h, len);
 #endif
 }
 
-static int handle_ignore(struct acmp *acmp, uint64_t now, const void *m, int len)
+static int handle_ignore(struct acmp *acmp, uint64_t now,
+	const void *m, int len)
 {
 	return 0;
 }
 
 /* IEEE 1722.1-2021, Sec. 8.1.2. Disconnecting a Stream */
 /** Milan v1.2 Sec. 5.5.2.2 UNBIND_RX_COMMAND */
-static int handle_disconnect_rx_command(struct acmp *acmp, uint64_t now, const void *m, int len)
+static int handle_disconnect_rx_command(struct acmp *acmp, uint64_t now,
+	const void *m, int len)
 {
-
-	pw_log_info("HANDLE: len: %i", len);
-	struct server *server = acmp->server;
-	struct avb_ethernet_header *h = m;
+	const struct avb_ethernet_header *h = m;
 	const struct avb_packet_acmp *p = SPA_PTROFF(m, sizeof(*h), void);
-	struct avb_packet_acmp *cmd;
 	struct avb_packet_acmp *reply;
 	int res;
 	uint16_t flags;
 
+	pw_log_info("HANDLE: len: %i", len);
+
 #if USE_MILAN
-	struct listener_fsm_cmd *fcmd;
+	(void) res;
+	(void) flags;
+	const struct listener_fsm_cmd *fcmd;
 	struct fsm_state_listener *fsm = acmp_fsm_find(acmp, STREAM_LISTENER_FSM,
 		be64toh(p->listener_guid));
+
+	(void)reply;
+	res = 0;
 	// TODO: Only valid for bound receiving unbound.
 	int evt = AECP_MILAN_ACMP_EVT_RCV_UNBIND_RX_CMD;
-	
-	// TODO: Currently creating a new fsm. There should be one. 
+
+	// TODO: Currently creating a new fsm. There should be one.
 	if (!fsm) {
-		pw_log_info("disconnect_rx_cmd: Creating new state machine for listener 0x%lx", be64toh(p->listener_guid));
+		pw_log_info("disconnect_rx_cmd: Creating new state machine for "
+					"listener 0x%lx", be64toh(p->listener_guid));
+
 		// Allocate memory for the new FSM state
 		 fsm = stream_listener_fsm_new(acmp, STREAM_LISTENER_FSM);
 		 if (!fsm) {
@@ -1513,7 +1594,8 @@ static int do_help(struct acmp *acmp, const char *args, FILE *out)
 	return 0;
 }
 
-static int acmp_command(void *data, uint64_t now, const char *command, const char *args, FILE *out)
+static int acmp_command(void *data, uint64_t now, const char *command,
+	const char *args, FILE *out)
 {
 	struct acmp *acmp = data;
 	int res;
@@ -1557,7 +1639,8 @@ struct avb_acmp *avb_acmp_register(struct server *server)
 	spa_list_init(&acmp->stream_fsm[STREAM_TALKER_FSM]);
 #endif // USE_MILAN
 
-	avdecc_server_add_listener(server, &acmp->server_listener, &server_events, acmp);
+	avdecc_server_add_listener(server, &acmp->server_listener,
+							    &server_events, acmp);
 
 	return (struct avb_acmp*)acmp;
 }
