@@ -383,14 +383,19 @@ static int setup_socket(struct stream *stream)
 	}
 
 	spa_zero(req);
-	snprintf(req.ifr_name, sizeof(req.ifr_name), "%s", server->ifname);
+	if (stream->direction == SPA_DIRECTION_OUTPUT) {
+		snprintf(req.ifr_name, sizeof(req.ifr_name), "%s", server->ifname);
+	}
+	 else {
+		snprintf(req.ifr_name, sizeof(req.ifr_name), "%s.2", server->ifname);
+	}
+
 	res = ioctl(fd, SIOCGIFINDEX, &req);
 	if (res < 0) {
 		pw_log_error("SIOCGIFINDEX %s failed: %m", server->ifname);
 		res = -errno;
 		goto error_close;
 	}
-
 	spa_zero(stream->sock_addr);
 	stream->sock_addr.sll_family = AF_PACKET;
 	stream->sock_addr.sll_protocol = htons(ETH_P_TSN);
@@ -434,6 +439,7 @@ static int setup_socket(struct stream *stream)
 		res = setsockopt(fd, SOL_PACKET, PACKET_ADD_MEMBERSHIP,
 				&mreq, sizeof(struct packet_mreq));
 
+
 		pw_log_info("join %s", avb_utils_format_addr(buf, 128, stream->addr));
 
 		if (res < 0) {
@@ -452,12 +458,12 @@ error_close:
 static void handle_aaf_packet(struct stream *stream,
 		struct avb_packet_aaf *p, int len)
 {
-	pw_log_info("AAF handling");
+	// pw_log_info("AAF handling");
 	uint32_t index, n_bytes;
 	int32_t filled;
 
 	filled = spa_ringbuffer_get_write_index(&stream->ring, &index);
-	n_bytes = ntohs(p->data_len) - 8;
+	n_bytes = ntohs(p->data_len);
 
 	if (filled + n_bytes > stream->buffer_size) {
 		pw_log_debug("capture overrun");
@@ -497,7 +503,7 @@ static void handle_iec61883_packet(struct stream *stream,
 static void on_socket_data(void *data, int fd, uint32_t mask)
 {
 	struct stream *stream = data;
-	pw_log_info("Data on socket: 0x%" PRIx64, stream->peer_id);
+	// pw_log_info("Data on socket: 0x%" PRIx64, stream->peer_id);
 
 	if (mask & SPA_IO_IN) {
 		int len;
@@ -508,32 +514,24 @@ static void on_socket_data(void *data, int fd, uint32_t mask)
 		if (len < 0) {
 			pw_log_warn("got recv error: %m");
 		}
-		else if (len < (int)sizeof(struct avb_packet_header)) {
+		else if (len < (int)sizeof(struct avb_frame_header_vlan_stripped)) {
 			pw_log_warn("short packet received (%d < %d)", len,
-					(int)sizeof(struct avb_packet_header));
+					(int)sizeof(struct avb_frame_header_vlan_stripped));
 		} else {
-			struct avb_frame_header *h = (void*)buffer;
-			struct avb_packet_iec61883 *p = SPA_PTROFF(h, sizeof(*h), void);
-			pw_log_info("Eth Type: 0x%" PRIx16, ntohs(h->etype));
-			pw_log_info("Type: 0x%" PRIx16, ntohs(h->type));
-			pw_log_info("Subtype: 0x%x\n", p->subtype);
-			// pw_log_info("Raw packet dump:");
-			// for (int i = 0; i < 32 && i < len; i++)
-			// 	pw_log_info("%02x ", buffer[i]);
+			struct avb_frame_header_vlan_stripped *h = (void*)buffer;
+			struct avb_packet_aaf *p = SPA_PTROFF(h, sizeof(*h), void);
 			if (memcmp(h->dest, stream->addr, 6) != 0) {
 				return;
 			}
 
 			switch (p->subtype)  {
 				case AVB_SUBTYPE_61883_IIDC: {
+						struct avb_packet_iec61883 *p = SPA_PTROFF(h, sizeof(*h), void);
 						handle_iec61883_packet(stream, p, len - sizeof(*h));
 					}
 					break;
 				case AVB_SUBTYPE_AAF: {
-						struct avb_frame_header *h = (void*)buffer;
-						struct avb_packet_aaf *paa = (struct avb_packet_aaf*)p;
-
-						handle_aaf_packet(stream, paa, len - sizeof(*h));
+						handle_aaf_packet(stream, p,  len - sizeof(*h));
 					}
 					break;
 				default:
