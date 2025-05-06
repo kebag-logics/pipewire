@@ -955,7 +955,7 @@ static int retry_pending(struct acmp *acmp, uint64_t now, struct pending *p)
 static int handle_connect_tx_command(struct acmp *acmp, uint64_t now, const void *m, int len)
 {
 	struct server *server = acmp->server;
-	uint8_t buf[len];
+	uint8_t buf[256];
 	struct avb_ethernet_header *h = (void*)buf;
 	struct avb_packet_acmp *reply = SPA_PTROFF(h, sizeof(*h), void);
 	const struct avb_packet_acmp *p = SPA_PTROFF(m, sizeof(*h), void);
@@ -989,14 +989,21 @@ done:
 	AVB_PACKET_ACMP_SET_STATUS(reply, status);
 	return avb_server_send_packet(server, h->dest, AVB_TSN_ETH, buf, len);
 #else
-	uint64_t talker_guid = p->talker_guid;
-	uint16_t talker_unique_id = reply->talker_unique_id;
-	uint16_t flags = ntohs(reply->flags);
+	uint64_t talker_guid;
+	uint16_t talker_unique_id;
+	uint16_t flags;
+
+	memcpy(buf, m, len);
+
+	talker_guid = htobe64(p->talker_guid);
+	talker_unique_id = htobe64(reply->talker_unique_id);
+	flags = ntohs(reply->flags);
 
 	if (talker_guid != server->entity_id)
 		return 0;
 
-	memcpy(buf, m, len);
+	pw_log_warn("Retrieve talker for %lx\n", talker_guid);
+
 	stream = server_find_stream(server, SPA_DIRECTION_OUTPUT,
 		talker_unique_id);
 
@@ -1030,8 +1037,9 @@ done:
 /* Milan v1.2, Sec. 5.5.2.4 Controller Bind, RCV_PROBE_TX_RESP */
 static int handle_connect_tx_response(struct acmp *acmp, uint64_t now, const void *m, int len)
 {
+	uint8_t buf[256];
 	struct server *server = acmp->server;
-	struct avb_ethernet_header *h;
+	struct avb_ethernet_header *h = (struct avb_ethernet_header *)buf;
 	const struct avb_packet_acmp *resp = SPA_PTROFF(m, sizeof(*h), void);
 	struct avb_packet_acmp *reply;
 	struct pending *pending;
@@ -1057,14 +1065,14 @@ static int handle_connect_tx_response(struct acmp *acmp, uint64_t now, const voi
 			 pw_log_error("Failed to allocate memory for new stream listener state");
 			 return -ENOMEM;
 		 }
-	 
+
 		 // Initialize the new FSM state
 		 fsm->binding_parameters.stream_id = be64toh(resp->stream_id);
 		 // TODO: This state is only valid for the demo uses case
 		 fsm->current_state = MILAN_ACMP_LISTENER_STA_PRB_W_RESP;
 		 fsm->timeout = LONG_MAX;
 		 fsm->size = 0;
-	 
+
 		return 0;
 	}
 	pw_log_info("connect_tx_resp: Proceeding with SM for listener 0x%lx.", be64toh(resp->listener_guid));
@@ -1086,6 +1094,7 @@ static int handle_connect_tx_response(struct acmp *acmp, uint64_t now, const voi
 	struct stream *stream;
 	int res;
 
+	memcpy(buf, m, len);
 	if (be64toh(resp->listener_guid) != server->entity_id)
 		return 0;
 
@@ -1152,8 +1161,9 @@ done:
 
 static int handle_disconnect_tx_response(struct acmp *acmp, uint64_t now, const void *m, int len)
 {
+	uint8_t buf[256];
 	struct server *server = acmp->server;
-	struct avb_ethernet_header *h;
+	struct avb_ethernet_header *h = (struct avb_ethernet_header *) buf;
 	struct avb_packet_acmp *reply;
 	const struct avb_packet_acmp *resp = SPA_PTROFF(m, sizeof(*h), void);
 	struct pending *pending;
@@ -1161,9 +1171,12 @@ static int handle_disconnect_tx_response(struct acmp *acmp, uint64_t now, const 
 	struct stream *stream;
 	int res;
 
-	if (be64toh(resp->listener_guid) != server->entity_id)
+
+	memcpy(buf, m, len);
+	if (be64toh(resp->talker_guid) != server->entity_id)
 		return 0;
 
+	pw_log_warn("%s", __func__);
 	sequence_id = ntohs(resp->sequence_id);
 
 	pending = pending_find(acmp, PENDING_TALKER, sequence_id);
@@ -1199,17 +1212,23 @@ static int handle_connect_rx_command(struct acmp *acmp, uint64_t now, const void
 {
 	pw_log_info("HANDLE: len: %i", len);
 	struct server *server = acmp->server;
-	struct avb_ethernet_header *h;
+	struct avb_ethernet_header *h = m;
 	const struct avb_packet_acmp *p = SPA_PTROFF(m, sizeof(*h), void);
 	struct avb_packet_acmp *cmd;
 	struct avb_packet_acmp *reply;
 	int res;
 	uint16_t flags;
 
+	if (be64toh(p->listener_guid) != server->entity_id)
+		return 0;
+
+	pw_log_warn("%s", __func__);
+
 #if USE_MILAN
 	struct listener_fsm_cmd *fcmd;
 	struct fsm_state_listener *fsm = acmp_fsm_find(acmp, STREAM_LISTENER_FSM,
-		be64toh(p->listener_guid));
+				be64toh(p->listener_guid));
+
 	int evt = AECP_MILAN_ACMP_EVT_RCV_BIND_RX_CMD;
 
 	if (!fsm) {
@@ -1275,7 +1294,7 @@ static int handle_disconnect_rx_command(struct acmp *acmp, uint64_t now, const v
 
 	pw_log_info("HANDLE: len: %i", len);
 	struct server *server = acmp->server;
-	struct avb_ethernet_header *h;
+	struct avb_ethernet_header *h = m;
 	const struct avb_packet_acmp *p = SPA_PTROFF(m, sizeof(*h), void);
 	struct avb_packet_acmp *cmd;
 	struct avb_packet_acmp *reply;
