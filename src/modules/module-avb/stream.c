@@ -313,10 +313,21 @@ struct stream *server_create_stream(struct server *server,
 				&sink_stream_events,
 			stream);
 
-	stream->info.info.raw.format = SPA_AUDIO_FORMAT_S24_32_BE;
+	//TODO find if this is valid  {
+	if (direction == SPA_DIRECTION_INPUT) {
+		stream->info.info.raw.format = SPA_AUDIO_FORMAT_S32_BE;
+	} else {
+		stream->info.info.raw.format = SPA_AUDIO_FORMAT_S24_32_BE;
+	}
 	stream->info.info.raw.flags = SPA_AUDIO_FLAG_UNPOSITIONED;
 	stream->info.info.raw.rate = 48000;
-	stream->info.info.raw.channels = 8;
+	// TODO find the value from the descriptor
+	if (direction == SPA_DIRECTION_INPUT) {
+		// FIXME!11!! A Hacky hack for 4 channel output streams to work
+		stream->info.info.raw.channels = 4;
+	} else {
+		stream->info.info.raw.channels = 8;
+	}
 	stream->stride = stream->info.info.raw.channels * 4;
 
 	n_params = 0;
@@ -401,16 +412,16 @@ static int setup_socket(struct stream *stream)
 	stream->sock_addr.sll_protocol = htons(ETH_P_TSN);
 	stream->sock_addr.sll_ifindex = req.ifr_ifindex;
 
+	res = setsockopt(fd, SOL_SOCKET, SO_PRIORITY, &stream->prio,
+		sizeof(stream->prio));
+	if (res < 0) {
+		pw_log_error("setsockopt(SO_PRIORITY %d) failed: %m", stream->prio);
+		res = -errno;
+		goto error_close;
+	}
+
 	if (stream->direction == SPA_DIRECTION_OUTPUT) {
 		struct sock_txtime txtime_cfg;
-
-		res = setsockopt(fd, SOL_SOCKET, SO_PRIORITY, &stream->prio,
-				sizeof(stream->prio));
-		if (res < 0) {
-			pw_log_error("setsockopt(SO_PRIORITY %d) failed: %m", stream->prio);
-			res = -errno;
-			goto error_close;
-		}
 
 		txtime_cfg.clockid = CLOCK_TAI;
 		txtime_cfg.flags = 0;
