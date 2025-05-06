@@ -188,7 +188,7 @@ static void check_readvertize(struct adp *adp, uint64_t now, struct entity *e)
 	if (e->last_time + (e->valid_time / 2) * SPA_NSEC_PER_SEC > now)
 		return;
 
-	pw_log_debug("entity %s readvertise",
+	pw_log_warn("entity %s readvertise",
 		avb_utils_format_id(buf, sizeof(buf), e->entity_id));
 
 	send_advertise(adp, now, e);
@@ -218,11 +218,12 @@ static int check_advertise(struct adp *adp, uint64_t now)
 			check_readvertize(adp, now, e);
 		return 0;
 	}
+	pw_log_warn("entity advertise1");
 
 	d = server_find_descriptor(server, AVB_AEM_DESC_AVB_INTERFACE, 0);
 	avb_interface = d ? d->ptr : NULL;
 
-	pw_log_info("entity %s advertise",
+	pw_log_warn("entity %s advertise",
 		avb_utils_format_id(buf, sizeof(buf), entity_id));
 
 	e = calloc(1, sizeof(*e));
@@ -230,6 +231,7 @@ static int check_advertise(struct adp *adp, uint64_t now)
 		return -errno;
 
 	e->advertise = true;
+	// Milan FIXME
 	// TODO: Was 10, reduced to 4?
 	e->valid_time = 4;
 	e->last_time = now;
