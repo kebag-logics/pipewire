@@ -80,24 +80,25 @@ struct avb_packet_mrp_footer {
 #define AVB_MRP_EVENT_LVA_TIMER		18
 
 /* attribute events */
-#define AVB_MRP_ATTRIBUTE_EVENT_NEW	0
+#define AVB_MRP_ATTRIBUTE_EVENT_NEW		0
 #define AVB_MRP_ATTRIBUTE_EVENT_JOININ	1
-#define AVB_MRP_ATTRIBUTE_EVENT_IN	2
+#define AVB_MRP_ATTRIBUTE_EVENT_IN		2
 #define AVB_MRP_ATTRIBUTE_EVENT_JOINMT	3
-#define AVB_MRP_ATTRIBUTE_EVENT_MT	4
-#define AVB_MRP_ATTRIBUTE_EVENT_LV	5
-#define AVB_MRP_ATTRIBUTE_EVENT_LVA	6
+#define AVB_MRP_ATTRIBUTE_EVENT_MT		4
+#define AVB_MRP_ATTRIBUTE_EVENT_LV		5
+#define AVB_MRP_ATTRIBUTE_EVENT_LVA		6
 
-#define AVB_MRP_SEND_NEW		1
-#define AVB_MRP_SEND_JOININ		2
-#define AVB_MRP_SEND_IN			3
-#define AVB_MRP_SEND_JOINMT		4
-#define AVB_MRP_SEND_MT			5
-#define AVB_MRP_SEND_LV			6
+#define AVB_MRP_SEND_NEW		0
+#define AVB_MRP_SEND_JOININ		1
+#define AVB_MRP_SEND_IN			2
+#define AVB_MRP_SEND_JOINMT		3
+#define AVB_MRP_SEND_MT			4
+#define AVB_MRP_SEND_LV			5
+#define AVB_MRP_SEND_LVA		6
 
 #define AVB_MRP_NOTIFY_NEW		1
 #define AVB_MRP_NOTIFY_JOIN		2
-#define AVB_MRP_NOTIFY_LEAVE		3
+#define AVB_MRP_NOTIFY_LEAVE	3
 
 
 // The generated array of string pointers (using the abbreviations)
@@ -166,7 +167,6 @@ static const char *mrp_attribute_event_char[] = {
 };
 
 static const char *mrp_send_char[] = {
-    /* [0]                      = */ NULL, // Or "invalid_send_state", as index 0 is not defined above
     /* [AVB_MRP_SEND_NEW]       = */ "new",
     /* [AVB_MRP_SEND_JOININ]    = */ "joinin",
     /* [AVB_MRP_SEND_IN]        = */ "in",
@@ -176,7 +176,7 @@ static const char *mrp_send_char[] = {
 };
 
 static const char *mrp_notify_char[] = {
-    /* [0]                       = */ NULL, // Or "invalid_notify"
+								NULL,
     /* [AVB_MRP_NOTIFY_NEW]      = */ "new",
     /* [AVB_MRP_NOTIFY_JOIN]     = */ "join",
     /* [AVB_MRP_NOTIFY_LEAVE]    = */ "leave",

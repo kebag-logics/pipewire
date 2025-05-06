@@ -93,14 +93,14 @@ static void mrp_periodic(void *data, uint64_t now)
 		mrp->periodic_timeout = now + MRP_PERIODTIMER_MS * SPA_NSEC_PER_MSEC;
 	}
 
+
 	if (now > mrp->lva_timer.leave_all_timeout) {
 		/* 802.1Q-2014 Table 10-5 */
+		mrp->lva_timer.state = FSM_LVA_ACTIVE;
 		if (mrp->lva_timer.leave_all_timeout > 0) {
 			global_event(mrp, now, AVB_MRP_EVENT_RX_LVA);
 			leave_all = true;
 		}
-		mrp_set_update_lva(mrp, now, false);
-		mrp->lva_timer.state = FSM_LVA_ACTIVE;
 	}
 
 	if (now > mrp->join_timeout) {
@@ -112,7 +112,9 @@ static void mrp_periodic(void *data, uint64_t now)
 	}
 
 	spa_list_for_each(a, &mrp->attributes, link) {
-		if (a->leave_timeout > 0 && now > a->leave_timeout) {
+		// 802.1Q Clause 10.7.4.2
+		if (a->leave_timeout > 0 && now > a->leave_timeout && a->registrar_state ==
+			AVB_MRP_LV) {
 			a->leave_timeout = 0;
 			avb_mrp_attribute_update_state(&a->attr, now, AVB_MRP_EVENT_LV_TIMER);
 		}
@@ -282,7 +284,7 @@ void avb_mrp_attribute_update_state(struct avb_mrp_attribute *attr, uint64_t now
 		notify = AVB_MRP_NOTIFY_NEW;
 		switch (state) {
 		case AVB_MRP_LV:
-			a->leave_timeout = 0;
+			a->leave_timeout = 0x7FFFFFFFFFFFFFFF;
 			break;
 		}
 		state = AVB_MRP_IN;
@@ -291,7 +293,7 @@ void avb_mrp_attribute_update_state(struct avb_mrp_attribute *attr, uint64_t now
 	case AVB_MRP_EVENT_RX_JOINMT:
 		switch (state) {
 		case AVB_MRP_LV:
-			a->leave_timeout = 0;
+			a->leave_timeout = 0x7FFFFFFFFFFFFFFF;
                         break;
 		case AVB_MRP_MT:
 			notify = AVB_MRP_NOTIFY_JOIN;
@@ -306,7 +308,7 @@ void avb_mrp_attribute_update_state(struct avb_mrp_attribute *attr, uint64_t now
 		switch (state) {
 		case AVB_MRP_IN:
 			a->leave_timeout = now + MRP_LVTIMER_MS * SPA_NSEC_PER_MSEC;
-			//state = AVB_MRP_LV;
+			state = AVB_MRP_LV;
 			break;
 		}
 		break;
