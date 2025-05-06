@@ -215,7 +215,7 @@ static void mvrp_event(void *data, uint64_t now, uint8_t event)
 		if (dispatch[a->attr.type].encode == NULL)
 			continue;
 
-		pw_log_debug("send %s %s", dispatch[a->attr.type].name,
+		pw_log_warn("send %s %s", dispatch[a->attr.type].name,
 				avb_mrp_send_name(a->attr.mrp->pending_send));
 
 		len = dispatch[a->attr.type].encode(mvrp, a, msg);

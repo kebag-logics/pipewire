@@ -15,7 +15,7 @@
 
 #include <pipewire/pipewire.h>
 
-#define BUFFER_SIZE	(1u<<16)
+#define BUFFER_SIZE	(1u<<15)
 #define BUFFER_MASK	(BUFFER_SIZE-1)
 
 struct stream {

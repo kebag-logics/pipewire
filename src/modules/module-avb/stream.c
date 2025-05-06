@@ -105,10 +105,13 @@ static int flush_write(struct stream *stream, uint64_t current_time)
 	avail = spa_ringbuffer_get_read_index(&stream->ring, &index);
 
 	pdu_count = (avail / stream->stride) / stream->frames_per_pdu;
-
+	if (!pdu_count) {
+		pw_log_error("not enough\n");
+		return 0;
+	}
 	// the t_uncertainty is 0 for now
 	txtime = current_time + stream->t_uncertainty;
-	ptime = txtime + stream->mtt;
+	ptime = txtime + 2000000;
 #ifdef USE_MILAN
 #else
 	dbc = stream->dbc;
@@ -188,7 +191,7 @@ static void on_sink_stream_process(void *data)
 		spa_ringbuffer_write_update(&stream->ring, index);
 	}
 	pw_stream_queue_buffer(stream->stream, buf);
-	clock_gettime(CLOCK_REALTIME, &now);
+	clock_gettime(CLOCK_TAI, &now);
 
 	time_now = SPA_TIMESPEC_TO_NSEC(&now);
 	flush_write(stream, time_now);
