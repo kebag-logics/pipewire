@@ -1280,7 +1280,6 @@ static int handle_connect_rx_command(struct acmp *acmp, uint64_t now,
 	int res;
 	uint16_t flags;
 
-
 	memcpy(buf, m, len);
 	pw_log_info("HANDLE: len: %i", len);
 	if (be64toh(p->listener_guid) != server->entity_id)
@@ -1316,8 +1315,6 @@ static int handle_connect_rx_command(struct acmp *acmp, uint64_t now,
 		 fsm->current_state = MILAN_ACMP_LISTENER_STA_UNBOUND;
 		 fsm->timeout = LONG_MAX;
 		 fsm->size = 0;
-
-		return 0;
 	}
 	pw_log_info("Proceeding with SM for listener 0x%lx.",
 					be64toh(p->listener_guid));
