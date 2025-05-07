@@ -1106,11 +1106,13 @@ static int handle_connect_tx_response(struct acmp *acmp,
 	(void) reply;
 	pw_log_info("HANDLE connect_tx_resp: len: %i", len);
 	const struct listener_fsm_cmd *fcmd;
-	struct fsm_state_listener *fsm = acmp_fsm_find(acmp, STREAM_LISTENER_FSM,
-		be64toh(resp->listener_guid));
+	struct fsm_state_listener *fsm;
 	int evt = AECP_MILAN_ACMP_EVT_RCV_PROBE_TX_RESP;
-
 	memcpy(buf, m, len);
+
+	fsm = acmp_fsm_find(acmp, STREAM_LISTENER_FSM,
+		be64toh(resp->listener_guid));
+
 	// At this state there should be a state machine from the rcv_bind_rx_cmd
 	if (!fsm) {
 		pw_log_info("connect_tx_resp: Creating new state machine for"
