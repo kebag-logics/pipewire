@@ -1,16 +1,16 @@
-# pipewire-avb Getting started
+# PipeWire-avb Getting started
 
 ## Prerequisites
 
-During the installation, it is assumed that a reliable connection to internet
-is available.ba
+During installation, it is assumed that a reliable Internet connection is 
+available.
 
 ### Hardware
 
 * Intel Network Interface:
   * i210 (TESTED)
   * i226 (NOT TESTED)
-* x86 platform with as many powerfull core as possible, tested with *SMT* and
+* x86 platform with as many powerful cores as possible, tested with *SMT* and
  *hyperthreading*
 * More than 8GB RAM
 * More than 60GB SSD disk space
@@ -20,9 +20,9 @@ is available.ba
 * Arch Linux version 2025-05-01 (TESTED)
 * Linux Ubuntu 24.04 (NOT TESTED)
 
-## Install
+## Automatic Installation
 
-The current doumentation will only mention Linux Arch:
+The current doumentation is describing how to make PipeWire run on ArchLinux.
 
 ### Semi-Automatically
 
@@ -43,37 +43,49 @@ Once booted the system will have the following credidential:
  * Login: pw
  * Password: pipewire
 
-It is recommended to change it (
+It is recommended to change the password.
 
-### Manual
+## Manual installation
 
-In the case the computer already has arch installed or for control and peace of
-mind, the following package a necessary for installation,
+In case the computer already has Arch Linux installed or for 
+control and peace of mind, the following packages are necessary 
+for installation.
 
-But make sure to have pipewire as the Audio Server.
+### Make sure that PipeWire is the Audio Server
+But make sure to have PipeWire as the Audio Server by running
 
-#### Create a USB bootable stick
+```pw-top```
+
+It should result in something like this
+```
+S   ID  QUANT   RATE    WAIT    BUSY   W/Q   B/Q  ERR FORMAT           NAME                           
+S   30      0      0    ---     ---   ---   ---     0                  Dummy-Driver
+S   31      0      0    ---     ---   ---   ---     0                  Freewheel-Driver
+S   35      0      0    ---     ---   ---   ---     0                  auto_null
+```
+
+### Create a USB bootable stick
 
 Steps:
 
  * Download the latest Archlinux version from [here](https://archlinux.org/download/)
- * Make a bootable USB stick with either Balena Etcher (works well in macOS: https://etcher.balena.io) or Rufus (works well on Windows: https://rufus.ie/en/)
+ * Make a bootable USB stick with either Balena Etcher (works well on macOS: https://etcher.balena.io) or Rufus (works well on Windows: https://rufus.ie/en/)
  * Configure the BIOS so that it can boot from the USB stick.
- * Boot from usb
+ * Boot from USB
  * Use archinstall, and follow the steps, or follow
     [the official Installation Guide](https://wiki.archlinux.org/title/Installation_guide)
 
-##### Configure and install the packages
+#### Configure and install the packages
 
 1. Install the desktop
 
     ```sudo pacman -S plasma-desktop```
 
-2. install terminal
+2. Install terminal
 
     ```sudo pacman -S gnome-terminal```
 
-3. Install the development and pipewire necessary tools
+3. Install the development and PipeWire necessary tools
 
 ```bash
     sudo pacman -S base \
@@ -130,17 +142,18 @@ Steps:
 
     ```sudo systemctl enable sshd```
 
-9. Enable the windows manager (sddm is assumed)
+9. Enable the window manager (sddm is assumed)
 
     ```sudo systemctl enable ssdm ```
 
-Then reboot.
+Then reboot: ```sudo reboot```.
 
 
-## Install linuxptp
+# Install LinuxPTP
 
-Linux ptp is a crutial element for synchronisation in the network. It is necessary
-to install as follows:
+LinuxPTP is a crucial element of synchronisation in the network. 
+
+Install as follows:
 
 ```bash
  $ git clone http://git.code.sf.net/p/linuxptp/code ~/linuxptp
@@ -149,7 +162,7 @@ to install as follows:
  $ sudo make install
 ```
 
-Then modify the file located at ~/linuxptp/configs/gPTP.conf. The parameter to change is
+Then modify the file located at ```~/linuxptp/configs/gPTP.conf```. The parameter to change is
 the **priority1** to **247** as diplayed below:
 
 ```bash
@@ -190,21 +203,23 @@ $ git clone --single-branch --branch milan-avb-dev \
    https://github.com/kebag-logics/pipewire.git ~/pipewire
 ```
 
-## Prepare the system to Run pipewire
+## Prepare the system to Run PipeWire
 
-Connect the Milan capable device to the network interface where Milan is going
+Connect a Milan capable device to the network interface where Milan is going
 to receive/send from/to (i210/i226) network card.
 
-Identity the i210/226 interface, and the following should be executed in the terminal:
+Identify the i210/226 interface name with ```ip a```. Typically, the interface name is something like ```enp2s0``` but it can differ on your system.
+
+Once the name is figured out, the following execute the following command and replace ```<interface-name>``` with the name you retrieved.:
 
 ```bash
-$ export AVB_INTERFACE  <your interface name>
+$ export AVB_INTERFACE  <interface-name>
 ```
 
 Now, execute the following:
 
 ```bash
-# Follow the pipewire folder
+# Follow the PipeWire folder
 $ cd ~/pipewire
 
 #configure
@@ -227,10 +242,10 @@ $ sudo ./scripts-milan/setup-vlan $AVB_INTERFACE
 
 ```
 
-Once done the ptp instances need to be ran in another seperated terminal as follows:
+Once done, the PTP instances need to be ran in another separate terminal as follows:
 
 ```bash
- $ export AVB_INTERFACE <your interface name>
+ $ export AVB_INTERFACE <interface-name>
  $ cd ~/pipewire
  $ ./scripts-milan/ptp-start.sh $AVB_INTERFACE
 sending: SET GRANDMASTER_SETTINGS_NP
@@ -248,9 +263,9 @@ phc2sys[2060.270]: CLOCK_REALTIME phc offset        -7 s2 freq  +14806 delay   2
 phc2sys[2061.270]: CLOCK_REALTIME phc offset         0 s2 freq  +14811 delay   2124
 ```
 
-## Run pipewire
+## Run PipeWire
 
-Once Pipewire is installed, the execution shall be done as below in a terminal:
+Once PipeWire is installed, the execution shall be done as below in a terminal:
 
 ```bash
  $ cd ~/pipewire
@@ -261,3 +276,11 @@ $ systemctl --user restart pipewire.service
 # Start with verbose logging
 $ /usr/bin/pipewire-avb -v
 ```
+
+## Configure PipeWire inputs and outputs
+
+1. Install qpwgraph
+    
+    ```sudo pacman -S qpwgraph```
+
+2. Run qpwgraph by typing ```qpwgraph``` into the console. A window with the available AVB Milan sources and sinks should show up. You can route audio from other applications to pipewire-avb-milan.
