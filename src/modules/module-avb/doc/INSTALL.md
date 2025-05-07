@@ -35,7 +35,7 @@ However, both can easily be done after executing the command below in the
 interactive interface.
 
 ```bash
- $ bash <( curl -L -s https://bit.ly/42NrpvR )
+ bash <( curl -L -s https://bit.ly/42NrpvR )
 ```
 
 Once booted the system will have the following credidential:
@@ -156,10 +156,10 @@ LinuxPTP is a crucial element of synchronisation in the network.
 Install as follows:
 
 ```bash
- $ git clone http://git.code.sf.net/p/linuxptp/code ~/linuxptp
- $ cd ~/linuxptp/
- $ make
- $ sudo make install
+ git clone http://git.code.sf.net/p/linuxptp/code ~/linuxptp
+ cd ~/linuxptp/
+ make
+ sudo make install
 ```
 
 Then modify the file located at ```~/linuxptp/configs/gPTP.conf```. The parameter to change is
@@ -189,17 +189,14 @@ network_transport       L2
 delay_mechanism         P2P
 ```
 
-Changing the **priority1** to your system proiority is better to make sure the timing
-is as close a system current timing, otherwise an error will arise when executing the
-ptp_start.sh script later on.
-
+It is recommended to set **priority1** to match the intended priority of the system to ensure the timing aligns closely with the system clock. Otherwise, a mismatch may cause errors when running the `ptp_start.sh` script later.vnc
 
 ## Install Pipewire
 
 Retrieve the source using git in your home Folder (~).:
 
 ```bash
-$ git clone --single-branch --branch milan-avb-dev \
+git clone --single-branch --branch milan-avb-dev \
    https://github.com/kebag-logics/pipewire.git ~/pipewire
 ```
 
@@ -208,46 +205,46 @@ $ git clone --single-branch --branch milan-avb-dev \
 Connect a Milan capable device to the network interface where Milan is going
 to receive/send from/to (i210/i226) network card.
 
+---
+**NOTE**: This step only has to be perfomred once!
+
 Identify the i210/226 interface name with ```ip a```. Typically, the interface name is something like ```enp2s0``` but it can differ on your system.
 
-Once the name is figured out, the following execute the following command and replace ```<interface-name>``` with the name you retrieved.:
+Once the name is figured out, add it to the `.bashrc` as the last line and replace ```<interface-name>``` with the name you retrieved:
 
 ```bash
-$ export AVB_INTERFACE  <interface-name>
+cd ~
+nano .bashrc
 ```
+Add this line
+```bash
+export AVB_INTERFACE=<interface-name>
+```
+
+Restart the console or source the file again with ```source .bashrc```
+
+It is crucial to ensure that the variable was set correctly. Therefore, run the 
+following command and make sure that the the interface name is displayed correctly.
+
+```bash
+echo $AVB_INTERFACE
+enp2s0
+```
+---
 
 Now, execute the following:
 
 ```bash
 # Follow the PipeWire folder
-$ cd ~/pipewire
-
-#configure
-$ meson configure builddir -Dprefix=/usr -Davb-interface="$AVB_INTERFACE"
-
-# Compile
-$ meson compile -C builddir
-
-# Install
-$ cd builddir
-$ sudo make install
-$ cd ..
-
-# Set capabilities
-$ sudo setcap cap_net_raw,cap_net_admin,cap_dac_override+eip /usr/bin/pipewire
-
-# Then prepare the i210 interface
-$ sudo ./scripts-milan/prepare-traffic-shaper.sh $AVB_INTERFACE
-$ sudo ./scripts-milan/setup-vlan $AVB_INTERFACE
-
+cd ~/pipewire/scripts-milan/
+./build-and-install.sh
 ```
 
 Once done, the PTP instances need to be ran in another separate terminal as follows:
 
 ```bash
- $ export AVB_INTERFACE <interface-name>
- $ cd ~/pipewire
- $ ./scripts-milan/ptp-start.sh $AVB_INTERFACE
+cd ~/pipewire
+./scripts-milan/ptp-start.sh $AVB_INTERFACE
 sending: SET GRANDMASTER_SETTINGS_NP
 phc2sys[2050.269]: Waiting for ptp4l...
 phc2sys[2051.269]: Waiting for ptp4l...
@@ -263,18 +260,15 @@ phc2sys[2060.270]: CLOCK_REALTIME phc offset        -7 s2 freq  +14806 delay   2
 phc2sys[2061.270]: CLOCK_REALTIME phc offset         0 s2 freq  +14811 delay   2124
 ```
 
+Let the terminal run.
+
 ## Run PipeWire
 
 Once PipeWire is installed, the execution shall be done as below in a terminal:
 
 ```bash
- $ cd ~/pipewire
-
-# Restart pipewire
-$ systemctl --user restart pipewire.service
-
-# Start with verbose logging
-$ /usr/bin/pipewire-avb -v
+cd ~/pipewire
+./scripts-milan/start_pipewire.sh
 ```
 
 ## Configure PipeWire inputs and outputs
@@ -284,3 +278,8 @@ $ /usr/bin/pipewire-avb -v
     ```sudo pacman -S qpwgraph```
 
 2. Run qpwgraph by typing ```qpwgraph``` into the console. A window with the available AVB Milan sources and sinks should show up. You can route audio from other applications to pipewire-avb-milan.
+
+## Make stream connections in Hive
+
+1. Download and install Hive from https://github.com/christophe-calmejane/Hive/releases
+2. Run Hive and connect the Milan device to the Pipewire instance.
