@@ -51,19 +51,6 @@ In case the computer already has Arch Linux installed or for
 control and peace of mind, the following packages are necessary 
 for installation.
 
-### Make sure that PipeWire is the Audio Server
-But make sure to have PipeWire as the Audio Server by running
-
-```pw-top```
-
-It should result in something like this
-```
-S   ID  QUANT   RATE    WAIT    BUSY   W/Q   B/Q  ERR FORMAT           NAME                           
-S   30      0      0    ---     ---   ---   ---     0                  Dummy-Driver
-S   31      0      0    ---     ---   ---   ---     0                  Freewheel-Driver
-S   35      0      0    ---     ---   ---   ---     0                  auto_null
-```
-
 ### Create a USB bootable stick
 
 Steps:
@@ -79,79 +66,93 @@ Steps:
 
 1. Install the desktop
 
-    ```sudo pacman -S plasma-desktop```
+    ``` sudo pacman -S plasma-desktop ```
 
 2. Install terminal
 
-    ```sudo pacman -S gnome-terminal```
+    ``` sudo pacman -S gnome-terminal ```
 
 3. Install the development and PipeWire necessary tools
 
-```bash
-    sudo pacman -S base \
-          base-devel \
-          bash-completion \
-          btrfs-progs \
-          clang \
-          cmake \
-          dolphin \
-          efibootmgr \
-          ethtool \
-          git \
-          glib2-devel \
-          gnome-console \
-          gnu-netcat \
-          htop \
-          less \
-          linux-firmware \
-          ltrace \
-          meson \
-          networkmanager \
-          numactl \
-          openssh \
-          openvpn \
-          qpwgraph \
-          sddm \
-          sshfs \
-          strace \
-          tmux \
-          tree \
-          unzip \
-          vim \
-          wireshark-cli \
-          zram-generator
-```
+    ```bash
+        sudo pacman -S base \
+            base-devel \
+            bash-completion \
+            btrfs-progs \
+            clang \
+            cmake \
+            dolphin \
+            efibootmgr \
+            ethtool \
+            git \
+            glib2-devel \
+            gnome-console \
+            gnu-netcat \
+            htop \
+            less \
+            linux-firmware \
+            ltrace \
+            meson \
+            networkmanager \
+            numactl \
+            openssh \
+            openvpn \
+            qpwgraph \
+            sddm \
+            sshfs \
+            strace \
+            tmux \
+            tree \
+            unzip \
+            vim \
+            wireshark-cli \
+            zram-generator
+    ```
 
 4. Enable Network Manager
 
-    ```sudo systemctl enable NetworkManager.service```
+    ``` sudo systemctl enable NetworkManager.service ```
 
 5. Start desktop
 
-    ```sudo systemctl start sddm```
+    ``` sudo systemctl start sddm ```
 
 6. Make it persistent
 
-    ```sudo systemctl enable sddm```
+    ``` sudo systemctl enable sddm ```
 
 7. Start ssh server
 
-    ```sudo systemctl start sshd```
+    ``` sudo systemctl start sshd ```
 
 8. Enable ssh server on boot
 
-    ```sudo systemctl enable sshd```
+    ``` sudo systemctl enable sshd ```
 
 9. Enable the window manager (sddm is assumed)
 
-    ```sudo systemctl enable ssdm ```
+    ``` sudo systemctl enable ssdm ```
 
 Then reboot: ```sudo reboot```.
 
+### Make sure that PipeWire is the Audio Server
 
-# Install LinuxPTP
+But make sure to have PipeWire as the Audio Server by running
 
-LinuxPTP is a crucial element of synchronisation in the network. 
+```pw-top```
+
+It should result in something like this
+
+```bash
+S   ID  QUANT   RATE    WAIT    BUSY   W/Q   B/Q  ERR FORMAT           NAME
+S   30      0      0    ---     ---   ---   ---     0                  Dummy-Driver
+S   31      0      0    ---     ---   ---   ---     0                  Freewheel-Driver
+S   35      0      0    ---     ---   ---   ---     0                  auto_null
+```
+
+## Install LinuxPTP
+
+LinuxPTP is a crucial element of synchronisation in the network.
 
 Install as follows:
 
@@ -162,8 +163,8 @@ Install as follows:
  sudo make install
 ```
 
-Then modify the file located at ```~/linuxptp/configs/gPTP.conf```. The parameter to change is
-the **priority1** to **247** as diplayed below:
+Then modify the file located at ```~/linuxptp/configs/gPTP.conf```.
+The parameter to change is the **priority1** to **247** as diplayed below:
 
 ```bash
 #
@@ -189,7 +190,10 @@ network_transport       L2
 delay_mechanism         P2P
 ```
 
-It is recommended to set **priority1** to match the intended priority of the system to ensure the timing aligns closely with the system clock. Otherwise, a mismatch may cause errors when running the `ptp_start.sh` script later.vnc
+It is recommended to set **priority1** to be lower so the Linux Machine system
+clock is closer to the the PTP clock of your Network Interface.
+Otherwise, a mismatch may cause errors when running the `ptp_start.sh` script
+later.
 
 ## Install Pipewire
 
@@ -208,28 +212,35 @@ to receive/send from/to (i210/i226) network card.
 ---
 **NOTE**: This step only has to be perfomred once!
 
-Identify the i210/226 interface name with ```ip a```. Typically, the interface name is something like ```enp2s0``` but it can differ on your system.
+Identify the i210/226 interface name with ```ip a```.
+Typically, the interface name is something like ```enp2s0``` but it can
+differ on your system.
 
-Once the name is figured out, add it to the `.bashrc` as the last line and replace ```<interface-name>``` with the name you retrieved:
+Once the name is figured out, add it to the `.bashrc` as the last line
+and replace ```<interface-name>``` with the name you retrieved:
 
 ```bash
 cd ~
 nano .bashrc
+
 ```
+
 Add this line
+
 ```bash
 export AVB_INTERFACE=<interface-name>
 ```
 
 Restart the console or source the file again with ```source .bashrc```
 
-It is crucial to ensure that the variable was set correctly. Therefore, run the 
+It is crucial to ensure that the variable was set correctly. Therefore, run the
 following command and make sure that the the interface name is displayed correctly.
 
 ```bash
 echo $AVB_INTERFACE
 enp2s0
 ```
+
 ---
 
 Now, execute the following:
@@ -274,12 +285,14 @@ cd ~/pipewire
 ## Configure PipeWire inputs and outputs
 
 1. Install qpwgraph
-    
+
     ```sudo pacman -S qpwgraph```
 
-2. Run qpwgraph by typing ```qpwgraph``` into the console. A window with the available AVB Milan sources and sinks should show up. You can route audio from other applications to pipewire-avb-milan.
+2. Run qpwgraph by typing ```qpwgraph``` into the console. A window with
+   the available AVB Milan sources and sinks should show up.
+   You can route audio from other applications to pipewire-avb-milan.
 
 ## Make stream connections in Hive
 
-1. Download and install Hive from https://github.com/christophe-calmejane/Hive/releases
-2. Run Hive and connect the Milan device to the Pipewire instance.
+1. Download and install Hive from [https://github.com/christophe-calmejane/Hive/releases](https://github.com/christophe-calmejane/Hive/releases)
+2. Run Hive and connect the Milan device to the Pipewire instance
