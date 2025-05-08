@@ -56,6 +56,8 @@ struct stream {
 	uint32_t frames_per_pdu;
 	int ptime_tolerance;
 
+	uint64_t stream_start;
+
 	uint8_t pdu[2048];
 	size_t hdr_size;
 	size_t payload_size;
