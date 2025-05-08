@@ -110,7 +110,7 @@ static int flush_write(struct stream *stream, uint64_t current_time)
 		return 0;
 	}
 	// the t_uncertainty is 0 for now
-	txtime = current_time + stream->t_uncertainty;
+	txtime = stream->stream_start + stream->t_uncertainty;
 	ptime = txtime + stream->mtt;
 #ifdef USE_MILAN
 #else
@@ -143,6 +143,7 @@ static int flush_write(struct stream *stream, uint64_t current_time)
 		txtime += stream->pdu_period;
 		ptime += stream->pdu_period;
 		index += stream->payload_size;
+		stream->stream_start += stream->pdu_period;
 #ifdef USE_MILAN
 #else
 		dbc += stream->frames_per_pdu;
@@ -194,7 +195,9 @@ static void on_sink_stream_process(void *data)
 	clock_gettime(CLOCK_TAI, &now);
 
 	time_now = SPA_TIMESPEC_TO_NSEC(&now);
-
+	if (time_now - stream->stream_start > 1000000000) {
+		stream->stream_start = time_now;
+	}
 
 	flush_write(stream, time_now);
 }
