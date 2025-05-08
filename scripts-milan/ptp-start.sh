@@ -39,7 +39,7 @@ PHC2SYS_PID=$!
 sudo chrt -f -p 52 "$PHC2SYS_PID"
 
 # Set grandmaster settings
-sudo pmc -u -b 0 -t 1 "SET GRANDMASTER_SETTINGS_NP clockClass 248 \
+sudo pmc -u -b 0 -t 1 "SET GRANDMASTER_SETTINGS_NP clockClass 247 \
     clockAccuracy 0xfe offsetScaledLogVariance 0xffff \
     currentUtcOffset 37 leap61 0 leap59 0 currentUtcOffsetValid 1 \
     ptpTimescale 1 timeTraceable 1 frequencyTraceable 0 \
