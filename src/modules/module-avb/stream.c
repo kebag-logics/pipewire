@@ -336,7 +336,7 @@ struct stream *server_create_stream(struct server *server,
 			pw_properties_new(
 				PW_KEY_MEDIA_CLASS, "Audio/Source",
 				PW_KEY_NODE_NAME, "avb.source",
-				PW_KEY_NODE_DESCRIPTION, "AVB Source",
+				PW_KEY_NODE_DESCRIPTION, "AVB Milan Source",
 				PW_KEY_NODE_WANT_DRIVER, "true",
 				NULL));
 	} else {
@@ -344,7 +344,7 @@ struct stream *server_create_stream(struct server *server,
 			pw_properties_new(
 				PW_KEY_MEDIA_CLASS, "Audio/Sink",
 				PW_KEY_NODE_NAME, "avb.sink",
-				PW_KEY_NODE_DESCRIPTION, "AVB Sink",
+				PW_KEY_NODE_DESCRIPTION, "AVB Milan Sink",
 				PW_KEY_NODE_WANT_DRIVER, "true",
 				NULL));
 	}
