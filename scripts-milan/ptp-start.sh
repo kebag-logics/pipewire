@@ -7,14 +7,16 @@
 
 # Part of the code taken from https://tsn.readthedocs.io/
 
-if [ $# -lt 1 ]; then
-    echo "Usage: $0 <network-interface>"
+# Use AVB_INTERFACE from environment if no argument is passed
+IFACE="${1:-$AVB_INTERFACE}"
+
+if [ -z "$IFACE" ]; then
+    echo "Usage: $0 [<network-interface>]"
     echo "Selected interface: (none)"
-    echo "If no interface is printed, make sure that AVB_INTERFACE is set"
+    echo "If no interface is printed, make sure that AVB_INTERFACE is set in your environment or .bashrc"
     exit 1
 fi
 
-IFACE="$1"
 echo "Selected interface: $IFACE"
 
 function kill_all() {
