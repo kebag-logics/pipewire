@@ -18,7 +18,7 @@
 /* IEEE 1722.1-2021, Sec. 7.2.12 - STRINGS Descriptor
 * Up to 7 localized strings
 */
-#define DSC_STRINGS_0_DEVICE_NAME "Croissant"
+#define DSC_STRINGS_0_DEVICE_NAME "Amuse-Gueule"
 #define DSC_STRINGS_1_CONFIGURATION_NAME "NON - redundant - 48kHz"
 #define DSC_STRINGS_2_MANUFACTURER_NAME "Kebag Logic"
 #define DSC_STRINGS_3_GROUP_NAME "Kebag Logic"
