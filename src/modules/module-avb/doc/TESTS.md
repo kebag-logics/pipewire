@@ -13,17 +13,18 @@ MILAN, AVB, and IEEE specifications.
 
 ### Setup 2
 
- //TODO SIMON's machine
-
+* Intel(R) Xeon(R) CPU E3-1225 v5 @ 3.30GHz
+* 8GiB RAM
+* i210
 
 ## Relevant documents
 
+* [Milan Specification](https://avnu.org/resource/milan-specification/)
 * [IEEE 802.1Q-2014](https://ieeexplore.ieee.org/document/6991462)
 * [IEEE 1722.1-2021](https://ieeexplore.ieee.org/document/9744630)
 * [IEEE 1722-2016](https://ieeexplore.ieee.org/document/7782716)
 * [IEEE 802.1AS-2011](https://ieeexplore.ieee.org/document/5741898)
 * [IEEE 802.1BA-2011](https://ieeexplore.ieee.org/document/6032690)
-* [Milan Specification](https://avnu.org/resource/milan-specification/)
 
 ## Methodology
 
@@ -33,15 +34,15 @@ added in order to validate the full interoperability of the solution.
 
 ### Specification related tests
 
-| Test | Result | Note |
-|-|-|-|
-| Get Entity Name | ❌ FAIL | Entity responds with characters that are not UTF-8 |
-| Get Entity Name from different Entity | ✅ PASS | No response within 250ms |
-| Get STREAM_INPUT Counters | ✅ PASS  | N/A |
-| Get STREAM_OUTPUT Counters | ✅ PASS  | N/A |
-| Get AVB_INTERFACE Counters | ✅ PASS  | N/A |
-| Get CLOCK_DOMAIN Counters | ✅ PASS  | N/A |
-| Get CLOCK_DOMAIN Counters from ADP and ACMP multicast address | ❌ FAIL | Device responds to multicast address traffic |
+| Test | Result | Note | Test Plan |
+|-|-|-|-|
+| Get Entity Name | ❌ FAIL | Entity responds with characters that are not UTF-8 | get_name.feature |
+| Get Entity Name from different Entity | ✅ PASS | No response within 250ms | get_name.feature |
+| Get STREAM_INPUT Counters | ✅ PASS  | N/A | get_counters.feature |
+| Get STREAM_OUTPUT Counters | ✅ PASS  | N/A | get_counters.feature |
+| Get AVB_INTERFACE Counters | ✅ PASS  | N/A | get_counters.feature |
+| Get CLOCK_DOMAIN Counters | ✅ PASS  | N/A | get_counters.feature |
+| Get CLOCK_DOMAIN Counters from ADP and ACMP multicast address | ❌ FAIL | Device responds to multicast address traffic | get_counters.feature |
 
 ## Audio tests
 
@@ -60,7 +61,7 @@ been heard so far.
 | Audio sourced from an AVB-certified device | ✅ PASS | N/A |
 | Audio Quality with no audible glitches | ✅ PASS | N/A |
 
-## Talker
+### Talker
 
 The Talker, on the other end has a very poor quality of Audio for now,
 many **AUDIBLE** glitch has been heard so far, but audio is still going through.

@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-During installation, it is assumed that a reliable Internet connection is 
+During installation, it is assumed that a reliable Internet connection is
 available.
 
 ### Hardware
@@ -40,26 +40,28 @@ interactive interface.
 
 Once booted the system will have the following credidential:
 
- * Login: pw
- * Password: pipewire
+* Login: pw
+* Password: pipewire
 
 It is recommended to change the password.
 
 ## Manual installation
 
-In case the computer already has Arch Linux installed or for 
-control and peace of mind, the following packages are necessary 
+In case the computer already has Arch Linux installed or for
+control and peace of mind, the following packages are necessary
 for installation.
 
 ### Create a USB bootable stick
 
 Steps:
 
- * Download the latest Archlinux version from [here](https://archlinux.org/download/)
- * Make a bootable USB stick with either Balena Etcher (works well on macOS: https://etcher.balena.io) or Rufus (works well on Windows: https://rufus.ie/en/)
- * Configure the BIOS so that it can boot from the USB stick.
- * Boot from USB
- * Use archinstall, and follow the steps, or follow
+* Download the latest Archlinux version from [here](https://archlinux.org/download/)
+* Make a bootable USB stick with either Balena Etcher
+(works well on macOS: [https://etcher.balena.io](https://etcher.balena.io))
+or Rufus (works well on Windows: [https://rufus.ie/en/](https://rufus.ie/en/))
+* Configure the BIOS so that it can boot from the USB stick.
+* Boot from USB
+* Use archinstall, and follow the steps, or follow
     [the official Installation Guide](https://wiki.archlinux.org/title/Installation_guide)
 
 #### Configure and install the packages
@@ -243,7 +245,36 @@ enp2s0
 
 ---
 
-Now, execute the following:
+### Prepapre the grandmaster ID
+
+The PipeWire-Milan system should be aware of which PTP clock grandmaster it is
+configured to.
+
+In the terminal, execute:
+
+```bash
+cat /sys/class/net/$AVB_INTERFACE/address
+```
+
+It need to be modified as folows, with the example of AA:BB:CC:DD:EE:FF :
+
+* Remove the column ':' character
+* Get the first 3 pair of numbers -> **AABBCC**
+* Append FFFE --> **AABBCCFFFE**
+* Append the remaining 3 pair of numbers -->  **AABBCCFFFEDDEEFF**
+* And replace the **0x3cc0c6FFFE0002CB** in
+[the file entity_model.h line 430](https://github.com/kebag-logic/pipewire/blob/milan-avb-dev/src/modules/module-avb/entity_model.h#L430)
+ with **0xAABBCCFFFEDDEEFF**
+
+*NOTE*:
+This needs to be adjusted each time interface **AVB_INTERFACE** is changed.
+Additionnaly, the compilation step below should be executed once more.
+
+---
+
+### Compile PipeWire and install
+
+Now, execute the following for compilation:
 
 ```bash
 # Follow the PipeWire folder
@@ -251,7 +282,12 @@ cd ~/pipewire/scripts-milan/
 ./build-and-install.sh
 ```
 
-Once done, the PTP instances need to be ran in another separate terminal as follows:
+---
+
+### Execution of the time synchronsation
+
+Once done the compilation done, the PTP instances need to be ran in another
+separate terminal as follows:
 
 ```bash
 cd ~/pipewire
