@@ -24,8 +24,8 @@ sudo modprobe -r igb
 sudo modprobe igb
 
 # Increase the number of descriptor to be used
-sudo ethtool -G ${NIC} rx 4096
-sudo ethtool -G ${NIC} tx 4096
+sudo ethtool -G ${NIC} rx 64
+sudo ethtool -G ${NIC} tx 64
 
 # Create the MQPrio mapping to Traffic class to Queue
 sudo tc qdisc add dev ${NIC} parent root handle 6666 mqprio \

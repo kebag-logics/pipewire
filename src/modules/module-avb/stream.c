@@ -110,13 +110,8 @@ static int flush_write(struct stream *stream, uint64_t current_time)
 		return 0;
 	}
 	// the t_uncertainty is 0 for now
-	txtime = current_time + stream->t_uncertainty;
+	txtime = stream->stream_start + stream->t_uncertainty;
 	ptime = txtime + stream->mtt;
-	if (!stream->starttime) {
-		stream->starttime = ptime;
-	} else {
-		stream->starttime += stream->mtt;
-	}
 #ifdef USE_MILAN
 #else
 	dbc = stream->dbc;
@@ -148,7 +143,7 @@ static int flush_write(struct stream *stream, uint64_t current_time)
 		txtime += stream->pdu_period;
 		ptime += stream->pdu_period;
 		index += stream->payload_size;
-		stream->starttime += stream->pdu_period;
+		stream->stream_start += stream->pdu_period;
 #ifdef USE_MILAN
 #else
 		dbc += stream->frames_per_pdu;
@@ -200,7 +195,9 @@ static void on_sink_stream_process(void *data)
 	clock_gettime(CLOCK_TAI, &now);
 
 	time_now = SPA_TIMESPEC_TO_NSEC(&now);
-
+	if (time_now - stream->stream_start > 1000000000) {
+		stream->stream_start = time_now;
+	}
 
 	flush_write(stream, time_now);
 }
@@ -339,7 +336,7 @@ struct stream *server_create_stream(struct server *server,
 			pw_properties_new(
 				PW_KEY_MEDIA_CLASS, "Audio/Source",
 				PW_KEY_NODE_NAME, "avb.source",
-				PW_KEY_NODE_DESCRIPTION, "AVB Source",
+				PW_KEY_NODE_DESCRIPTION, "AVB Milan Source",
 				PW_KEY_NODE_WANT_DRIVER, "true",
 				NULL));
 	} else {
@@ -347,7 +344,7 @@ struct stream *server_create_stream(struct server *server,
 			pw_properties_new(
 				PW_KEY_MEDIA_CLASS, "Audio/Sink",
 				PW_KEY_NODE_NAME, "avb.sink",
-				PW_KEY_NODE_DESCRIPTION, "AVB Sink",
+				PW_KEY_NODE_DESCRIPTION, "AVB Milan Sink",
 				PW_KEY_NODE_WANT_DRIVER, "true",
 				NULL));
 	}
@@ -365,7 +362,7 @@ struct stream *server_create_stream(struct server *server,
 	if (direction == SPA_DIRECTION_INPUT) {
 		stream->info.info.raw.format = SPA_AUDIO_FORMAT_S32_BE;
 	} else {
-		stream->info.info.raw.format = SPA_AUDIO_FORMAT_S24_32_BE;
+		stream->info.info.raw.format = SPA_AUDIO_FORMAT_S32_BE;
 	}
 	stream->info.info.raw.flags = SPA_AUDIO_FLAG_UNPOSITIONED;
 	stream->info.info.raw.rate = 48000;
@@ -649,7 +646,6 @@ int stream_activate(struct stream *stream, uint64_t now)
 		memcpy(h->src, server->mac_addr, 6);
 		avb_mrp_attribute_begin(stream->talker_attr->mrp, now);
 		avb_mrp_attribute_join(stream->talker_attr->mrp, now, true);
-		stream->starttime = 0;
 		// TODO retrieve the presentation time, for now the defaault is 2ms
 		stream->mtt = AVB_MILAN_MAX_PTO;
 		// TODO retrieve a way to get the average system latency and multiply it by 2.

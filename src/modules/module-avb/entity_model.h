@@ -11,14 +11,14 @@
 // Enables second configuration for debugging purposes
 #define CONFIGURATION_2_ENABLE 0
 // Disable talker
-#define TALKER_ENABLE 0
+#define TALKER_ENABLE 1
 
 // TODO: Make defines as long as specified length
 /**************************************************************************************/
-/* IEEE 1722.1-2021, Sec. 7.2.12 - STRINGS Descriptor 
+/* IEEE 1722.1-2021, Sec. 7.2.12 - STRINGS Descriptor
 * Up to 7 localized strings
 */
-#define DSC_STRINGS_0_DEVICE_NAME "Croissant"
+#define DSC_STRINGS_0_DEVICE_NAME "Amuse-Gueule"
 #define DSC_STRINGS_1_CONFIGURATION_NAME "NON - redundant - 48kHz"
 #define DSC_STRINGS_2_MANUFACTURER_NAME "Kebag Logic"
 #define DSC_STRINGS_3_GROUP_NAME "Kebag Logic"
@@ -41,8 +41,8 @@
         AVB_ADP_ENTITY_CAPABILITY_AEM_IDENTIFY_CONTROL_INDEX_VALID | \
         AVB_ADP_ENTITY_CAPABILITY_AEM_INTERFACE_INDEX_VALID)
 /* IEEE 1722.1-2021, Table 7-2 - ENTITY Descriptor
-* This is the maximum number of STREAM_OUTPUT 
-* descriptors the ATDECC Entity has for 
+* This is the maximum number of STREAM_OUTPUT
+* descriptors the ATDECC Entity has for
 * Output Streams in any of its Configurations */
 
 #if TALKER_ENABLE
@@ -61,21 +61,21 @@
 #define DSC_ENTITY_MODEL_CONTROLLER_CAPABILITIES 0
 /* IEEE 1722.1-2021, Table 7-2 ENTITY Descriptor
 * The available index of the ATDECC Entity.
-* This is the same as the available_index field 
+* This is the same as the available_index field
 * in ATDECC Discovery Protocol.*/
 #define DSC_ENTITY_MODEL_AVAILABLE_INDEX 0
-/* IEEE 1722.1-2021, Table 7-2 ENTITY Descriptor 
-    * The association ID for the ATDECC Entity. 
-    * This is the same as association_id field 
+/* IEEE 1722.1-2021, Table 7-2 ENTITY Descriptor
+    * The association ID for the ATDECC Entity.
+    * This is the same as association_id field
     * in ATDECC Discovery Protocol*/
 #define DSC_ENTITY_MODEL_ASSOCIATION_ID 0
 #define DSC_ENTITY_MODEL_ENTITY_NAME DSC_STRINGS_0_DEVICE_NAME
 /* IEEE 1722.1-2021, Table 7-2 - ENTITY Descriptor
-    * The localized string reference pointing to the 
+    * The localized string reference pointing to the
     * localized vendor name. See 7.3.7. */
 #define DSC_ENTITY_MODEL_VENDOR_NAME_STRING 2
-/* IEEE 1722.1-2021, Table 7-2 - ENTITY Descriptor 
-    * The localized string reference pointing to the 
+/* IEEE 1722.1-2021, Table 7-2 - ENTITY Descriptor
+    * The localized string reference pointing to the
     * localized model name. See 7.3.7. */
 #define DSC_ENTITY_MODEL_MODEL_NAME_STRING 0
 #define DSC_ENTITY_MODEL_FIRMWARE_VERSION "0.3.48"
@@ -83,7 +83,7 @@
 #define DSC_ENTITY_MODEL_SERIAL_NUMBER "0xBEBEDEAD"
 #if CONFIGURATION_2_ENABLE
     #define DSC_ENTITY_MODEL_CONFIGURATIONS_COUNT 2
-#else 
+#else
     #define DSC_ENTITY_MODEL_CONFIGURATIONS_COUNT 1
 #endif
 #define DSC_ENTITY_MODEL_CURRENT_CONFIGURATION 0
@@ -94,11 +94,11 @@
 #define DSC_CONFIGURATION_DESCRIPTOR_COUNTS_COUNT 8
 #define DSC_CONFIGURATION_OBJECT_NAME DSC_STRINGS_1_CONFIGURATION_NAME
 /* IEEE 1722.1-2021, Table 7-3 CONFIGURATION Descriptor
-    * The localized string reference pointing to the 
+    * The localized string reference pointing to the
     * localized Configuration name. */
 #define DSC_CONFIGURATION_LOCALIZED_DESCRIPTION 1
 /* IEEE 1722.1-2021, Table 7-3 CONFIGURATION Descriptor
-    * The offset to the descriptor_counts field from the 
+    * The offset to the descriptor_counts field from the
     * start of the descriptor. This field is set to 74 for
     * this version of AEM. */
 #define DSC_CONFIGURATION_DESCRIPTOR_COUNTS_OFFSET 74
@@ -169,21 +169,21 @@
 
 #define DSC_AUDIO_CLUSTER_LOCALIZED_DESCRIPTION AVB_AEM_DESC_INVALID
 
-/* The signal_type and signal_index fields indicate the 
-    * object providing the signal destined for the channels 
-    * of the streams mapped to the port. For a signal which 
-    * is sourced internally from the Unit, the signal_type 
-    * is set to AUDIO_UNIT and signal_index is set to the 
-    * index of the Unit. For a Cluster attached to a 
-    * STREAM_PORT_INPUT the signal_type and signal_index 
+/* The signal_type and signal_index fields indicate the
+    * object providing the signal destined for the channels
+    * of the streams mapped to the port. For a signal which
+    * is sourced internally from the Unit, the signal_type
+    * is set to AUDIO_UNIT and signal_index is set to the
+    * index of the Unit. For a Cluster attached to a
+    * STREAM_PORT_INPUT the signal_type and signal_index
     * fields is set to INVALID and zero (0) respectively. */
 #define DSC_AUDIO_CLUSTER_SIGNAL_TYPE 0
 #define DSC_AUDIO_CLUSTER_SIGNAL_INDEX 0
-/* The index of the output of the signal source of the 
-    * cluster. For a signal_type of SIGNAL_SPLITTER or 
-    * SIGNAL_DEMULTIPLEXER this is which output of the 
-    * object it is being sourced from, for a signal_type 
-    * of MATRIX this is the column the signal is from 
+/* The index of the output of the signal source of the
+    * cluster. For a signal_type of SIGNAL_SPLITTER or
+    * SIGNAL_DEMULTIPLEXER this is which output of the
+    * object it is being sourced from, for a signal_type
+    * of MATRIX this is the column the signal is from
     * and for any other signal_type this is zero (0). */
 #define DSC_AUDIO_CLUSTER_SIGNAL_OUTPUT 0
 #define DSC_AUDIO_CLUSTER_PATH_LATENCY_IN_NS 500
@@ -199,8 +199,8 @@
 
 #define DSC_STREAM_PORT_INPUT_CLOCK_DOMAIN_INDEX 0x0000
 #define DSC_STREAM_PORT_INPUT_PORT_FLAGS AVB_AEM_PORT_FLAG_CLOCK_SYNC_SOURCE
-/* The number of clusters within the Port. This corresponds to the number of 
-    * AUDIO_CLUSTER, VIDEO_CLUSTER or SENSOR_CLUSTER descriptors which represent 
+/* The number of clusters within the Port. This corresponds to the number of
+    * AUDIO_CLUSTER, VIDEO_CLUSTER or SENSOR_CLUSTER descriptors which represent
     * these clusters. */
 // TODO: Validate value
 #define DSC_STREAM_PORT_INPUT_NUMBER_OF_CONTROLS 0
@@ -229,18 +229,18 @@
 /* IEEE 1722.1-2021, Sec. 7.2.3 AUDIO_UNIT Descriptor */
 /* Milan v1.2, Sec. 5.3.3.3 */
 
-/* IEEE 1722.1-2021, Sec. 7.3.1 
-    * A sampling rate consists of a 3 bit pull field 
-    * representing a multiplier and a 29 bit 
+/* IEEE 1722.1-2021, Sec. 7.3.1
+    * A sampling rate consists of a 3 bit pull field
+    * representing a multiplier and a 29 bit
     * base_frequency in hertz, as detailed in Figure 7-2.
-    * The pull field specifies the multiplier modifier 
-    * of the base_frequency field which is required to 
-    * calculate the appropriate nominal sampling rate. 
-    * The pull field may have one of the values defined 
-    * in Table 7-70: 
+    * The pull field specifies the multiplier modifier
+    * of the base_frequency field which is required to
+    * calculate the appropriate nominal sampling rate.
+    * The pull field may have one of the values defined
+    * in Table 7-70:
     * The base_frequency field defines the nominal base
     * sampling rate in Hz, from 1 Hz to 536 870 911 Hz.
-    * The value of this field is augmented by the 
+    * The value of this field is augmented by the
     * pull field value.*/
 #define BUILD_SAMPLING_RATE(pull, base_freq_hz) \
 (((uint32_t)(pull) << 29) | ((uint32_t)(base_freq_hz) & 0x1FFFFFFF))
