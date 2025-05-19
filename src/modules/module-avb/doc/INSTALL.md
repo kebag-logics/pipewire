@@ -203,7 +203,7 @@ Retrieve the source using git in your home Folder (~).:
 
 ```bash
 git clone --single-branch --branch milan-avb-dev \
-   https://github.com/kebag-logics/pipewire.git ~/pipewire
+   https://github.com/kebag-logic/pipewire.git ~/pipewire
 ```
 
 ## Prepare the system to Run PipeWire

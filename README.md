@@ -1,3 +1,23 @@
+# PipeWire Milan
+This mirror is dedicated to the integration of the AVB Milan specification into pipewire. For more information please see the [README](https://github.com/kebag-logic/pipewire/blob/milan-avb-dev/src/modules/module-avb/README.md) in the module-avb.
+
+## Installation guide
+
+**Note**: Please follow step 1 to step 3 to completely set up your system from scratch.
+
+1. For setting up a dedicated Arch Linux machine, follow the steps in the [Arch Linux Guide](https://github.com/kebag-logic/pipewire/blob/milan-avb-dev/src/modules/module-avb/doc/INSTALL.md#automatic-installation)
+2. For setting up pipewire on your Arch Linux machine you need to install
+
+    1. LinuxPTP: [LinuxPTP Guide](https://github.com/kebag-logic/pipewire/blob/milan-avb-dev/src/modules/module-avb/doc/INSTALL.md#automatic-installation)
+    2. PipeWire from the `milan-avb-dev` branch: [PipeWire Installation Guide](https://github.com/kebag-logic/pipewire/blob/milan-avb-dev/src/modules/module-avb/doc/INSTALL.md#automatic-installation)
+
+3. For running PipeWire with the Milan implementation, follow the steps in the [Pipewire System Guide](https://github.com/kebag-logic/pipewire/blob/milan-avb-dev/src/modules/module-avb/doc/INSTALL.md#automatic-installation)
+
+# Test Results
+The PipeWire Milan implementation follows a very loose behavior test. 
+
+Current Test Results can be found in the [Test Results](https://github.com/kebag-logic/pipewire/blob/milan-avb-dev/src/modules/module-avb/doc/TESTS.md) section.
+
 # PipeWire
 
 [PipeWire](https://pipewire.org) is a server and user space API to

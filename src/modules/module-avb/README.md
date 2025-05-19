@@ -26,7 +26,7 @@ Installation instructions are available here:
 
 We welcome contributions and collaboration from the community to help move
 the project forward
-See the [Issues list](https://github.com/kebag-logics/pipewire/issues) if you'd
+See the [Issues list](https://github.com/kebag-logic/pipewire/issues) if you'd
 like to contribute.
 
 ## Current Test Results
