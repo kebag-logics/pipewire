@@ -17,10 +17,14 @@ struct aem_state_var_info {
     /** persisted */
     const bool is_persited;
     /** The descriptor type it belongs to */
+    // FIXME Remove once the refactoring is finished
     const uint16_t desc_type;
+
     /** Not all var can time out */
     bool expires;
+
     /** The counts of the vars per entity */
+    // FIXME Remove once the refactoring is finished
     size_t      count;
     /** Element size */
     size_t      el_sz;
@@ -35,6 +39,8 @@ struct aecp_aem_base_info {
     /** Originator of the control
      * This is needed so the unsoolictied notification does not send back SUCCESS
      * to the originator of of the unsolicited notification */
+    // FIXME the only case when this is needed is when a registred controller,
+    // Has already provided the necessary information
     uint64_t controller_entity_id;
 
     /** Check the need for an update, that is usually updated when setting var. */
@@ -86,6 +92,11 @@ struct aecp_aem_unsol_notification_state {
 
 };
 
+struct aecp_aem_entity_state {
+    struct aecp_aem_lock_state  lock_state;
+    struct aecp_aem_unsol_notification_state unsol_notif_state;
+    struct avb_aem_desc_entity desc;
+};
 struct aecp_aem_configuration_state {
     struct aecp_aem_base_info base_info;
     uint16_t cfg_idx;
@@ -153,6 +164,11 @@ struct aecp_aem_counter_avb_interface_state {
     uint32_t error_crc;
 };
 
+struct aecp_aem_avb_interface_state {
+    struct aecp_aem_counter_avb_interface_state counters;
+    struct avb_aem_desc_avb_interface desc;
+};
+
 /**
  * Milan v1.2 Table 5.15: GET_COUNTERS mandatory AVB Interface counters
  */
@@ -181,17 +197,29 @@ struct aecp_aem_counter_stream_input_state {
     uint32_t frame_rx;
 };
 
+struct aecp_aem_stream_output_state {
+    struct aecp_aem_counter_stream_input_state counters;
+    struct stream stream;
+    struct avb_aem_desc_stream desc;
+};
+
+
 /**
  * Milan v1.2 Table 5.17: GET_COUNTERS Stream Output counters
  */
 struct aecp_aem_counter_stream_output_state {
     struct aecp_aem_desc_base base_desc;
-
     uint32_t stream_start;
     uint32_t stream_stop;
     uint32_t media_reset;
     uint32_t tu;
     uint32_t frame_tx;
+};
+
+struct aecp_aem_stream_output_state {
+    struct aecp_aem_counter_stream_output_state counters;
+    struct stream stream;
+    struct avb_aem_desc_stream desc;
 };
 
 /**

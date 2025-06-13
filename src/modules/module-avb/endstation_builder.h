@@ -10,7 +10,7 @@
 #include "internal.h"
 
 int endstation_builder_add_descriptor(struct server *server, uint16_t type,
-     uint16_t index, size_t size, void *ptr)
+     uint16_t index, size_t size, void *ptr);
 
 
 #endif // __ENDSTATION_H__

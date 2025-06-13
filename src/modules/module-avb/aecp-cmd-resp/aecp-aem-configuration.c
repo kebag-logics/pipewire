@@ -58,6 +58,8 @@ int handle_cmd_set_configuration(struct aecp *aecp, int64_t now, const void *m, 
 	req_cfg_id = ntohs(cfg->configuration_index);
 	cfg_count = ntohs(entity_desc->configurations_count);
 
+	// FIXME: refactoring: remove the cfg_state, the value is already in the
+	// in the descriptor anyway
 	if (aecp_aem_get_state_var(aecp, htobe64(p->aecp.target_guid),
 									aecp_aem_configuration, 0, &cfg_state)) {
 		return reply_not_supported(aecp, m, len);

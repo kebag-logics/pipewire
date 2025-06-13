@@ -84,6 +84,12 @@ struct stream {
 
 	struct avb_msrp_attribute *talker_attr;
 	struct avb_msrp_attribute *listener_attr;
+	// FIXME, refactoring: should not this be struct avb_msrp_attribute *stream_sttr;
+
+	union {
+		struct fsm_state_talker acmp_state_talker;
+		struct fsm_state_listener acmp_state_listener;
+	}
 	struct avb_mvrp_attribute *vlan_attr;
 };
 
