@@ -84,37 +84,37 @@
 #define AVB_MILAN_ACMP_FLAGS_UDP								(1<<6)
 
 enum milan_acmp_talker_sta {
-	MILAN_AMCP_TALKER_STA_MAX
+    MILAN_AMCP_TALKER_STA_MAX
 };
 
 /** Milan v1.2 ACMP */
 enum milan_acmp_listener_sta {
-	MILAN_ACMP_LISTENER_STA_UNBOUND,
-	MILAN_ACMP_LISTENER_STA_PRB_W_AVAIL,
-	MILAN_ACMP_LISTENER_STA_PRB_W_DELAY,
-	MILAN_ACMP_LISTENER_STA_PRB_W_RESP,
-	MILAN_ACMP_LISTENER_STA_PRB_W_RESP2,
-	MILAN_ACMP_LISTENER_STA_PRB_W_RETRY,
-	MILAN_ACMP_LISTENER_STA_SETTLED_NO_RSV,
-	MILAN_ACMP_LISTENER_STA_SETTLED_RSV_OK,
+    MILAN_ACMP_LISTENER_STA_UNBOUND,
+    MILAN_ACMP_LISTENER_STA_PRB_W_AVAIL,
+    MILAN_ACMP_LISTENER_STA_PRB_W_DELAY,
+    MILAN_ACMP_LISTENER_STA_PRB_W_RESP,
+    MILAN_ACMP_LISTENER_STA_PRB_W_RESP2,
+    MILAN_ACMP_LISTENER_STA_PRB_W_RETRY,
+    MILAN_ACMP_LISTENER_STA_SETTLED_NO_RSV,
+    MILAN_ACMP_LISTENER_STA_SETTLED_RSV_OK,
 
-	MILAN_ACMP_LISTENER_STA_MAX,
+    MILAN_ACMP_LISTENER_STA_MAX,
 };
 
 struct avb_packet_acmp {
-	struct avb_packet_header hdr;
-	uint64_t stream_id;
-	uint64_t controller_guid;
-	uint64_t talker_guid;
-	uint64_t listener_guid;
-	uint16_t talker_unique_id;
-	uint16_t listener_unique_id;
-	char stream_dest_mac[6];
-	uint16_t connection_count;
-	uint16_t sequence_id;
-	uint16_t flags;
-	uint16_t stream_vlan_id;
-	uint16_t reserved;
+    struct avb_packet_header hdr;
+    uint64_t stream_id;
+    uint64_t controller_guid;
+    uint64_t talker_guid;
+    uint64_t listener_guid;
+    uint16_t talker_unique_id;
+    uint16_t listener_unique_id;
+    char stream_dest_mac[6];
+    uint16_t connection_count;
+    uint16_t sequence_id;
+    uint16_t flags;
+    uint16_t stream_vlan_id;
+    uint16_t reserved;
 } __attribute__ ((__packed__));
 
 #define AVB_PACKET_ACMP_SET_MESSAGE_TYPE(p,v)		AVB_PACKET_SET_SUB1(&(p)->hdr, v)
@@ -122,6 +122,51 @@ struct avb_packet_acmp {
 
 #define AVB_PACKET_ACMP_GET_MESSAGE_TYPE(p)		AVB_PACKET_GET_SUB1(&(p)->hdr)
 #define AVB_PACKET_ACMP_GET_STATUS(p)			AVB_PACKET_GET_SUB2(&(p)->hdr)
+struct fsm_state_talker {
+    struct spa_list link;
+
+    uint64_t stream_id;
+    enum milan_acmp_talker_sta current_state;
+    int64_t timeout;
+};
+
+struct fsm_binding_parameters {
+    uint32_t status;
+    uint64_t controller_entity_id;
+    uint64_t talker_entity_id;
+    uint64_t listener_entity_id;
+
+    uint16_t talker_unique_id;
+    uint16_t listener_unique_id;
+
+    uint16_t sequence_id;
+
+    uint64_t stream_id;
+    char stream_dest_mac[6];
+    uint8_t stream_vlan_id;
+};
+
+struct fsm_state_listener {
+    struct spa_list link;
+
+    struct fsm_binding_parameters binding_parameters;
+
+    enum milan_acmp_listener_sta current_state;
+    int64_t timeout;
+    uint16_t flags;
+    uint8_t probing_status;
+    uint16_t connection_count;
+    uint8_t STREAMING_WAIT;
+
+    // FIXME: Is it necessary? remove if not
+    uint8_t buf[2048];
+};
+
+struct avb_acmp *avb_acmp_register_listener(struct server *server,
+        struct fsm_state_listener *fsm_state_listener);
+
+struct avb_acmp *avb_acmp_register_talker(struct server *server,
+        struct fsm_state_talker *fsm_talker);
 
 struct avb_acmp *avb_acmp_register(struct server *server);
 void avb_acmp_unregister(struct avb_acmp *acmp);

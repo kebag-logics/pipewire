@@ -222,6 +222,12 @@ struct aecp_aem_stream_output_state {
     struct avb_aem_desc_stream desc;
 };
 
+struct aecp_aem_stream_input_state {
+    struct aecp_aem_counter_stream_input_state counters;
+    struct stream stream;
+    struct avb_aem_desc_stream desc;
+};
+
 /**
  * The aecp_aem_desc_base inherites from the base
  */

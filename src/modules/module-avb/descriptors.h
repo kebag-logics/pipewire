@@ -16,15 +16,16 @@
 #include "internal.h"
 #include "descriptor-field-value-types.h"
 #include "entity_model.h"
+#include "endstation_builder.h"
 
 static inline void init_descriptors(struct server *server)
 {
 	// TODO PERSISTENCE: retrieve the saved buffers.
 	/**************************************************************************************/
-	/* IEEE 1722.1-2021, Sec. 7.2.12 - STRINGS Descriptor 
+	/* IEEE 1722.1-2021, Sec. 7.2.12 - STRINGS Descriptor
 	* Up to 7 localized strings
 	*/
-	server_add_descriptor(server, AVB_AEM_DESC_STRINGS, 0,
+	endstation_builder_add_descriptor(server, AVB_AEM_DESC_STRINGS, 0,
 			sizeof(struct avb_aem_desc_strings),
 			&(struct avb_aem_desc_strings)
 	{
@@ -36,7 +37,7 @@ static inline void init_descriptors(struct server *server)
 
 	/**************************************************************************************/
 	/* IEEE 1722.1-2021, Sec. 7.2.11 - LOCALE Descriptor */
-	server_add_descriptor(server, AVB_AEM_DESC_LOCALE, 0,
+	endstation_builder_add_descriptor(server, AVB_AEM_DESC_LOCALE, 0,
 			sizeof(struct avb_aem_desc_locale),
 			&(struct avb_aem_desc_locale)
 	{
@@ -49,7 +50,7 @@ static inline void init_descriptors(struct server *server)
 	/* IEEE 1722.1-2021, Sec. 7.2.1 - ENTITY Descriptor */
 	/* Milan v1.2, Sec. 5.3.3.1 */
 
-	server_add_descriptor(server, AVB_AEM_DESC_ENTITY, 0,
+	endstation_builder_add_descriptor(server, AVB_AEM_DESC_ENTITY, 0,
 			sizeof(struct avb_aem_desc_entity),
 			&(struct avb_aem_desc_entity)
 	{
@@ -108,7 +109,7 @@ static inline void init_descriptors(struct server *server)
 			{ htons(AVB_AEM_DESC_LOCALE), htons(DSC_CONFIGURATION_NO_OF_LOCALES) },
 		}
 	};
-	server_add_descriptor(server, AVB_AEM_DESC_CONFIGURATION, 0,
+	endstation_builder_add_descriptor(server, AVB_AEM_DESC_CONFIGURATION, 0,
 			sizeof(config), &config);
 
 #if CONFIGURATION_2_ENABLE
@@ -136,7 +137,7 @@ static inline void init_descriptors(struct server *server)
 			{ htons(AVB_AEM_DESC_LOCALE), htons(1) },
 		}
 	};
-	server_add_descriptor(server, AVB_AEM_DESC_CONFIGURATION, 1,
+	endstation_builder_add_descriptor(server, AVB_AEM_DESC_CONFIGURATION, 1,
 			sizeof(config), &config1);
 #endif
 
@@ -176,13 +177,13 @@ static inline void init_descriptors(struct server *server)
 			.localized_description = htons(DSC_CONTROL_LOCALIZED_DESCRIPTION),
 		}
 	};
-	server_add_descriptor(server, AVB_AEM_DESC_CONTROL, 0,
+	endstation_builder_add_descriptor(server, AVB_AEM_DESC_CONTROL, 0,
 			sizeof(ctrl), &ctrl);
 
 	/**************************************************************************************/
 	/* IEEE 1722.1-2021, Sec. 7.2.19 AUDIO_MAP Descriptor */
 	/* Milan v1.2, Sec. 5.3.3.9 */
-	
+
 	struct {
 		struct avb_aem_desc_audio_map desc;
 		struct avb_aem_audio_mapping_format maps[DSC_AUDIO_MAPS_NO_OF_MAPPINGS];
@@ -199,7 +200,7 @@ static inline void init_descriptors(struct server *server)
 		maps_input.maps[map_idx].mapping_cluster_offset  = htons(map_idx);
 		maps_input.maps[map_idx].mapping_stream_channel  = htons(map_idx);
 	}
-	server_add_descriptor(server, AVB_AEM_DESC_AUDIO_MAP, 0,
+	endstation_builder_add_descriptor(server, AVB_AEM_DESC_AUDIO_MAP, 0,
 		 sizeof(maps_input), &maps_input);
 
 	struct {
@@ -219,13 +220,13 @@ static inline void init_descriptors(struct server *server)
 		maps_output.maps[map_idx].mapping_stream_channel  = htons(DSC_AUDIO_MAPS_NO_OF_MAPPINGS+map_idx);
 	}
 
-	server_add_descriptor(server, AVB_AEM_DESC_AUDIO_MAP, 1,
+	endstation_builder_add_descriptor(server, AVB_AEM_DESC_AUDIO_MAP, 1,
 		 sizeof(maps_output), &maps_output);
 
 	/**************************************************************************************/
 	/* IEEE 1722.1-2021, Sec. 7.2.16 AUDIO_CLUSTER Descriptor */
 	/* Milan v1.2, Sec. 5.3.3.8 */
-	
+
 	struct avb_aem_desc_audio_cluster clusters[DSC_AUDIO_CLUSTER_NO_OF_CLUSTERS];
 
 	for (uint32_t cluster_idx = 0; cluster_idx < DSC_AUDIO_CLUSTER_NO_OF_CLUSTERS; cluster_idx++) {
@@ -251,7 +252,7 @@ static inline void init_descriptors(struct server *server)
 		clusters[cluster_idx].aes3_data_type_ref = DSC_AUDIO_CLUSTER_AES3_DATA_TYPE_REF;
 		clusters[cluster_idx].aes3_data_type = htons(DSC_AUDIO_CLUSTER_AES3_DATA_TYPE);
 
-		server_add_descriptor(server, AVB_AEM_DESC_AUDIO_CLUSTER, cluster_idx,
+		endstation_builder_add_descriptor(server, AVB_AEM_DESC_AUDIO_CLUSTER, cluster_idx,
 				sizeof(clusters[0]), &clusters[cluster_idx]);
 	}
 
@@ -269,7 +270,7 @@ static inline void init_descriptors(struct server *server)
 		.number_of_maps = htons(DSC_STREAM_PORT_INPUT_NUMBER_OF_MAPS),
 		.base_map = htons(DSC_STREAM_PORT_INPUT_BASE_MAP),
 	};
-	server_add_descriptor(server, AVB_AEM_DESC_STREAM_PORT_INPUT, 0,
+	endstation_builder_add_descriptor(server, AVB_AEM_DESC_STREAM_PORT_INPUT, 0,
 			sizeof(stream_port_input0), &stream_port_input0);
 
 	/**************************************************************************************/
@@ -286,10 +287,10 @@ static inline void init_descriptors(struct server *server)
 		.number_of_maps = htons(DSC_STREAM_PORT_OUTPUT_NUMBER_OF_MAPS),
 		.base_map = htons(DSC_STREAM_PORT_OUTPUT_BASE_MAP),
 	};
-	server_add_descriptor(server, AVB_AEM_DESC_STREAM_PORT_OUTPUT, 0,
+	endstation_builder_add_descriptor(server, AVB_AEM_DESC_STREAM_PORT_OUTPUT, 0,
 			sizeof(stream_port_output0), &stream_port_output0);
 #endif
-	
+
 	/**************************************************************************************/
 	/* IEEE 1722.1-2021, Sec. 7.2.3 AUDIO_UNIT Descriptor */
 	/* Milan v1.2, Sec. 5.3.3.3 */
@@ -344,7 +345,7 @@ static inline void init_descriptors(struct server *server)
 			{ .pull_frequency = htonl(DSC_AUDIO_UNIT_SUPPORTED_SAMPLING_RATE_IN_HZ_0) },
 		}
 	};
-	server_add_descriptor(server, AVB_AEM_DESC_AUDIO_UNIT, 0,
+	endstation_builder_add_descriptor(server, AVB_AEM_DESC_AUDIO_UNIT, 0,
 			sizeof(audio_unit), &audio_unit);
 
     /**************************************************************************************/
@@ -385,7 +386,7 @@ static inline void init_descriptors(struct server *server)
 			htobe64(DSC_STREAM_INPUT_FORMATS_4),
 		},
 	};
-	server_add_descriptor(server, AVB_AEM_DESC_STREAM_INPUT, 0,
+	endstation_builder_add_descriptor(server, AVB_AEM_DESC_STREAM_INPUT, 0,
 			sizeof(stream_input_0), &stream_input_0);
 
 	/**************************************************************************************/
@@ -420,7 +421,7 @@ static inline void init_descriptors(struct server *server)
             htobe64(DSC_STREAM_INPUT_CRF_FORMATS_0),
         },
     };
-    server_add_descriptor(server, AVB_AEM_DESC_STREAM_INPUT, 1,
+    endstation_builder_add_descriptor(server, AVB_AEM_DESC_STREAM_INPUT, 1,
             sizeof(stream_input_crf_0), &stream_input_crf_0);
 
 
@@ -461,7 +462,7 @@ static inline void init_descriptors(struct server *server)
             htobe64(DSC_STREAM_OUTPUT_FORMATS_4),
         },
     };
-    server_add_descriptor(server, AVB_AEM_DESC_STREAM_OUTPUT, 0,
+    endstation_builder_add_descriptor(server, AVB_AEM_DESC_STREAM_OUTPUT, 0,
             sizeof(stream_output_0), &stream_output_0);
 #endif
 
@@ -488,7 +489,7 @@ static inline void init_descriptors(struct server *server)
 	memset(avb_interface.object_name, 0, sizeof(avb_interface.object_name));
 	strncpy(avb_interface.object_name, "", 63);
 	memcpy(avb_interface.mac_address, server->mac_addr, 6);
-	server_add_descriptor(server, AVB_AEM_DESC_AVB_INTERFACE, 0,
+	endstation_builder_add_descriptor(server, AVB_AEM_DESC_AVB_INTERFACE, 0,
 			sizeof(avb_interface), &avb_interface);
 
     /**************************************************************************************/
@@ -505,7 +506,7 @@ static inline void init_descriptors(struct server *server)
         .clock_source_location_type = htons(DSC_CLOCK_SOURCE_INTERNAL_LOCATION_TYPE),
         .clock_source_location_index = htons(DSC_CLOCK_SOURCE_INTERNAL_LOCATION_INDEX),
     };
-    server_add_descriptor(server, AVB_AEM_DESC_CLOCK_SOURCE, 0,
+    endstation_builder_add_descriptor(server, AVB_AEM_DESC_CLOCK_SOURCE, 0,
             sizeof(clock_source_internal), &clock_source_internal);
 
     // AAF Clock Descriptor
@@ -518,7 +519,7 @@ static inline void init_descriptors(struct server *server)
         .clock_source_location_type = htons(DSC_CLOCK_SOURCE_AAF_LOCATION_TYPE),
         .clock_source_location_index = htons(DSC_CLOCK_SOURCE_AAF_LOCATION_INDEX),
     };
-    server_add_descriptor(server, AVB_AEM_DESC_CLOCK_SOURCE, 1,
+    endstation_builder_add_descriptor(server, AVB_AEM_DESC_CLOCK_SOURCE, 1,
             sizeof(clock_source_aaf), &clock_source_aaf);
 
     // CRF Clock Descriptor
@@ -531,7 +532,7 @@ static inline void init_descriptors(struct server *server)
         .clock_source_location_type = htons(DSC_CLOCK_SOURCE_CRF_LOCATION_TYPE),
         .clock_source_location_index = htons(DSC_CLOCK_SOURCE_CRF_LOCATION_INDEX),
     };
-    server_add_descriptor(server, AVB_AEM_DESC_CLOCK_SOURCE, 2,
+    endstation_builder_add_descriptor(server, AVB_AEM_DESC_CLOCK_SOURCE, 2,
             sizeof(clock_source_crf), &clock_source_crf);
 
     /**************************************************************************************/
@@ -556,7 +557,7 @@ static inline void init_descriptors(struct server *server)
         },
     };
 
-    server_add_descriptor(server, AVB_AEM_DESC_CLOCK_DOMAIN, 0,
+    endstation_builder_add_descriptor(server, AVB_AEM_DESC_CLOCK_DOMAIN, 0,
             sizeof(clock_domain), &clock_domain);
 }
 

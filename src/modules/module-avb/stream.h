@@ -97,8 +97,8 @@ struct stream {
 #include "mvrp.h"
 #include "maap.h"
 
-struct stream *server_create_stream(struct server *server,
-		enum spa_direction direction, uint16_t index);
+struct stream *server_create_stream(struct server *server, struct stream *stream
+        enum spa_direction direction, uint16_t index);
 
 void stream_destroy(struct stream *stream);
 

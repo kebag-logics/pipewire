@@ -1,5 +1,6 @@
 #include "endstation_builder.h"
 #include "aecp-aem.h"
+#include "aecp-aem-state.h"
 
 typedef void* (es_builder_cb_t)(struct server *server, uint16_t type,
             uint16_t index, size_t size, void *ptr);
@@ -82,7 +83,7 @@ static void *es_builder_desc_stream_output(struct server *server, uint16_t type,
     memcpy(&stream_output.desc, ptr, size);
 
     ptr = server_add_descriptor(server, type, index, sizeof(stream_output),
-        &avb_interface_state);
+        &stream_output);
 
     if (!ptr) {
         pw_log_error("Error durring allocation\n");
@@ -123,12 +124,20 @@ static void *es_builder_desc_stream_input(struct server *server, uint16_t type,
     // Media Lock / Media Unlock / Stream interrupted / SEQ_NUM_Mismatch
     // Media reset / Timestamp Uncertain / Unspported format / Late Timestamp
     // Early Timestamp / Frames RX
+    struct aecp_aem_stream_input_state stream_input = { 0 };
+    void *ptr;
 
+    memcpy(&stream_input.desc, ptr, size);
 
-    pw_log_error("Not Implemented\n")
-    spa_assert(0);
+    ptr = server_add_descriptor(server, type, index, sizeof(stream_input),
+        &stream_input);
 
-    return -1;
+    if (!ptr) {
+        pw_log_error("Error durring allocation\n");
+        spa_assert(0);
+    }
+
+    return ptr;
 }
 
 // Milan v1.2 5.3.9 STREAM_OUTPUT_PORT
@@ -199,7 +208,7 @@ static struct es_bulder_st es_builder[AVB_AEM_DESC_MAX_17221] =
 
 
     // HELPER_ES_BUIDLER(AVB_AEM_DESC_CLOCK_DOMAIN,es_builder_desc_clock_domain),
-    HELPER_ES_BUIDLER(AVB_AEM_DESC_CONTROL, es_builder_desc_identify),
+    // HELPER_ES_BUIDLER(AVB_AEM_DESC_CONTROL, es_builder_desc_identify),
 };
 
 

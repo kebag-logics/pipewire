@@ -284,7 +284,8 @@ static const struct pw_stream_events sink_stream_events = {
 	.process = on_sink_stream_process
 };
 
-struct stream *server_create_stream(struct server *server,
+
+struct stream *server_create_stream(struct server *server, struct stream *stream
 		enum spa_direction direction, uint16_t index)
 {
 	struct stream *stream;
@@ -294,17 +295,6 @@ struct stream *server_create_stream(struct server *server,
 	uint8_t buffer[1024];
 	struct spa_pod_builder b;
 	int res;
-
-	desc = server_find_descriptor(server,
-			direction == SPA_DIRECTION_INPUT ?
-			AVB_AEM_DESC_STREAM_INPUT :
-			AVB_AEM_DESC_STREAM_OUTPUT, index);
-	if (desc == NULL)
-		return NULL;
-
-	stream = calloc(1, sizeof(*stream));
-	if (stream == NULL)
-		return NULL;
 
 	stream->server = server;
 	stream->direction = direction;
@@ -419,7 +409,6 @@ error_free_stream:
 	pw_stream_destroy(stream->stream);
 	errno = -res;
 error_free:
-	free(stream);
 	return NULL;
 }
 
@@ -427,7 +416,6 @@ void stream_destroy(struct stream *stream)
 {
 	avb_mrp_attribute_destroy(stream->listener_attr->mrp);
 	spa_list_remove(&stream->link);
-	free(stream);
 }
 
 static int setup_socket(struct stream *stream)

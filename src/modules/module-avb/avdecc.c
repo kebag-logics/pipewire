@@ -275,22 +275,20 @@ struct server *avdecc_server_new(struct impl *impl, struct spa_dict *props)
 	if ((res = setup_socket(server)) < 0)
 		goto error_free;
 
-	init_descriptors(server);
-
 
 	server->mrp = avb_mrp_new(server);
 	if (server->mrp == NULL)
 		goto error_free;
 
-	_aecp = avb_aecp_register(server);
-	init_aecp_state_vars((struct aecp *) _aecp);
+	// _aecp = avb_aecp_register(server);
+	// init_aecp_state_vars((struct aecp *) _aecp);
 
 	server->maap = avb_maap_register(server);
 	server->mmrp = avb_mmrp_register(server);
 	server->msrp = avb_msrp_register(server);
 	server->mvrp = avb_mvrp_register(server);
 	server->adp  = avb_adp_register(server);
-	avb_acmp_register(server);
+	server->acmp = avb_acmp_register(server);
 
 	server->domain_attr = avb_msrp_attribute_new(server->msrp,
 			AVB_MSRP_ATTRIBUTE_TYPE_DOMAIN);
@@ -301,8 +299,7 @@ struct server *avdecc_server_new(struct impl *impl, struct spa_dict *props)
 	avb_mrp_attribute_begin(server->domain_attr->mrp, 0);
 	avb_mrp_attribute_join(server->domain_attr->mrp, 0, true);
 
-	server_create_stream(server, SPA_DIRECTION_INPUT, 0);
-	server_create_stream(server, SPA_DIRECTION_OUTPUT, 0);
+	init_descriptors(server);
 
 	avb_maap_reserve(server->maap, 1);
 
