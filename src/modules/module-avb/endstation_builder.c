@@ -2,6 +2,7 @@
 #include "aecp-aem.h"
 #include "aecp-aem-state.h"
 #include "acmp.h"
+#include <limits.h>
 
 typedef void* (es_builder_cb_t)(struct server *server, uint16_t type,
             uint16_t index, size_t size, void *ptr);
@@ -15,19 +16,25 @@ static void *es_builder_desc_entity(struct server *server, uint16_t type,
     // Unsollicited notifications + list of the lockings
     // Lock/ Unlock + entity id of the ctonroller locking
     struct aecp_aem_entity_state entity_state = {0};
-    void ptr;
+    void *ptr_alloc;
 
     memcpy(&entity_state.desc, ptr, size);
 
-    ptr = server_add_descriptor(server, type, index, sizeof(entity_state),
+    entity_state.lock_state.base_info.expire_timeout = LONG_MAX;
+    for (unsigned int unsol_index = 0; unsol_index < AECP_AEM_MILAN_MAX_CONTROLLER;
+            unsol_index < AECP_AEM_MILAN_MAX_CONTROLLER;  unsol_index++) {
+        entity_state.unsol_notif_state[unsol_index].base_info.expire_timeout = LONG_MAX;
+    }
+
+    ptr_alloc = server_add_descriptor(server, type, index, sizeof(entity_state),
         &entity_state);
 
-    if (!ptr) {
+    if (!ptr_alloc) {
         pw_log_error("Error durring allocation\n");
         spa_assert(0);
     }
 
-    return ptr;
+    return ptr_alloc;
 }
 
 // Milan v1.2 Clause 5.3.6 AVB Interface
@@ -45,19 +52,20 @@ static void *es_builder_desc_avb_interface(struct server *server, uint16_t type,
     // * RX CRC ERROR
 
     struct aecp_aem_avb_interface_state avb_interface_state = { 0 };
-    void * ptr;
+    void *ptr_alloc;
 
     memcpy(&avb_interface_state.desc, ptr, size);
 
-    ptr = server_add_descriptor(server, type, index, sizeof(avb_interface_state),
+    avb_interface_state.counters.base_desc.base_info.expire_timeout = LONG_MAX;
+    ptr_alloc = server_add_descriptor(server, type, index, sizeof(avb_interface_state),
         &avb_interface_state);
 
-    if (!ptr) {
+    if (!ptr_alloc) {
         pw_log_error("Error durring allocation\n");
         spa_assert(0);
     }
 
-    return ptr;
+    return ptr_alloc;
 }
 
 // Milan v1.2 5.3.7 STREAM_OUTPUT
@@ -79,19 +87,13 @@ static void *es_builder_desc_stream_output(struct server *server, uint16_t type,
     // Frames TX
 
     struct aecp_aem_stream_output_state stream_output = { 0 };
-    void * ptr;
+    void *ptr_alloc;
 
     memcpy(&stream_output.desc, ptr, size);
 
-    ptr = server_add_descriptor(server, type, index, sizeof(stream_output),
-        &stream_output);
+    stream_output.counters.base_desc.base_info.expire_timeout = LONG_MAX;
 
-    if (!ptr) {
-        pw_log_error("Error durring allocation\n");
-        spa_assert(0);
-    }
-
-    // FIXME same as stream input, to discuss,
+    // FIXME same as stream input, to discuss.
     // The order is important, the stream must be created
     // to get the id then the ACMP shall be created.
     // Unfortunately for now the acmp uses the stream id from the stream structu
@@ -112,7 +114,15 @@ static void *es_builder_desc_stream_output(struct server *server, uint16_t type,
         spa_assert(0);
     }
 
-    return ptr;
+    ptr_alloc = server_add_descriptor(server, type, index, sizeof(stream_output),
+                                      &stream_output);
+
+    if (!ptr_alloc) {
+        pw_log_error("Error durring allocation\n");
+        spa_assert(0);
+    }
+
+    return ptr_alloc;
 }
 
 // Milan v1.2 5.3.8 STREAM_INPUT
@@ -147,17 +157,9 @@ static void *es_builder_desc_stream_input(struct server *server, uint16_t type,
     // Media reset / Timestamp Uncertain / Unspported format / Late Timestamp
     // Early Timestamp / Frames RX
     struct aecp_aem_stream_input_state stream_input = { 0 };
-    void *ptr;
+    void *ptr_alloc;
 
     memcpy(&stream_input.desc, ptr, size);
-
-    ptr = server_add_descriptor(server, type, index, sizeof(stream_input),
-        &stream_input);
-
-    if (!ptr) {
-        pw_log_error("Error durring allocation\n");
-        spa_assert(0);
-    }
 
     // FIXME, to discuss, The order is important, the stream must be created
     // to get the id then the ACMP shall be created.
@@ -179,6 +181,14 @@ static void *es_builder_desc_stream_input(struct server *server, uint16_t type,
         spa_assert(0);
     }
 
+    ptr_alloc = server_add_descriptor(server, type, index, sizeof(stream_input),
+                                       &stream_input);
+
+    if (!ptr_alloc) {
+        pw_log_error("Error durring allocation\n");
+        spa_assert(0);
+    }
+
     return ptr;
 }
 
@@ -187,6 +197,7 @@ static void *es_builder_desc_stream_port_output(struct server *server, uint16_t 
             uint16_t index, size_t size, void *ptr)
 {
     // Milan V1.2 Clause 5.3.9.1 Channel mapping
+    // For now not used.
 
     pw_log_error("Not Implemented\n")
     spa_assert(0);
@@ -200,7 +211,7 @@ static void *es_builder_desc_stream_port_input(struct server *server, uint16_t t
             uint16_t index, size_t size, void *ptr)
 {
     // Milan V1.2 Clause 5.3.10.1 Channel mapping
-
+    // For now not used.
     pw_log_error("Not Implemented\n")
     spa_assert(0);
 
@@ -215,13 +226,15 @@ static void *es_builder_desc_clock_domain(struct server *server, uint16_t type,
 {
     // Milan V1.2 Clause 5.3.11.1 Clocks source
     // Milan V1.2 Clause 5.3.11.2 Diagnostic counters: Lock / Unlocked.
+
+    // For now not used.
 }
 
 // Milan v1.2 5.3.12 Identify
 static void *es_builder_desc_identify(struct server *server, uint16_t type,
             uint16_t index, size_t size, void *ptr)
 {
-
+    // For now not used.
     pw_log_error("Not Implemented\n")
     spa_assert(0);
 
