@@ -1,6 +1,7 @@
 #include "endstation_builder.h"
 #include "aecp-aem.h"
 #include "aecp-aem-state.h"
+#include "acmp.h"
 
 typedef void* (es_builder_cb_t)(struct server *server, uint16_t type,
             uint16_t index, size_t size, void *ptr);
@@ -90,6 +91,27 @@ static void *es_builder_desc_stream_output(struct server *server, uint16_t type,
         spa_assert(0);
     }
 
+    // FIXME same as stream input, to discuss,
+    // The order is important, the stream must be created
+    // to get the id then the ACMP shall be created.
+    // Unfortunately for now the acmp uses the stream id from the stream structu
+    // with the ASUMPTION that the stream structure is initialized. So to fix
+    // this issue there are 2 approach: Use CONTAINER_OF macros in the acmp
+    // state machine to retrieve the stream ID from the stream directly. Or the
+    // the stream module initiate the ACMP state machine. However there would be
+    // a cyclic dependency.
+
+    if (server_create_stream(server, &stream_output.streams, SPA_DIRECTION_OUTPUT,
+            index)) {
+        pw_log_error("Could not create the OUTPUT stream")
+        spa_assert(0);
+    }
+
+    if (avb_acmp_register_talker(server, &stream_output.stream)){
+        pw_log_error("Could not register the listener")
+        spa_assert(0);
+    }
+
     return ptr;
 }
 
@@ -134,6 +156,26 @@ static void *es_builder_desc_stream_input(struct server *server, uint16_t type,
 
     if (!ptr) {
         pw_log_error("Error durring allocation\n");
+        spa_assert(0);
+    }
+
+    // FIXME, to discuss, The order is important, the stream must be created
+    // to get the id then the ACMP shall be created.
+    // Unfortunately for now the acmp uses the stream id from the stream structu
+    // with the ASUMPTION that the stream structure is initialized. So to fix
+    // this issue there are 2 approach: Use CONTAINER_OF macros in the acmp
+    // state machine to retrieve the stream ID from the stream directly. Or the
+    // the stream module initiate the ACMP state machine. However there would be
+    // a cyclic dependency.
+
+    if (server_create_stream(server, &stream_input.streams, SPA_DIRECTION_INPUT,
+            index)) {
+        pw_log_error("Could not create the INPUT stream")
+        spa_assert(0);
+    }
+
+    if (avb_acmp_register_listener(server, &stream_input.stream)){
+        pw_log_error("Could not register the listener")
         spa_assert(0);
     }
 

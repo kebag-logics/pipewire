@@ -280,9 +280,6 @@ struct server *avdecc_server_new(struct impl *impl, struct spa_dict *props)
 	if (server->mrp == NULL)
 		goto error_free;
 
-	// _aecp = avb_aecp_register(server);
-	// init_aecp_state_vars((struct aecp *) _aecp);
-
 	server->maap = avb_maap_register(server);
 	server->mmrp = avb_mmrp_register(server);
 	server->msrp = avb_msrp_register(server);

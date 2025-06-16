@@ -122,51 +122,10 @@ struct avb_packet_acmp {
 
 #define AVB_PACKET_ACMP_GET_MESSAGE_TYPE(p)		AVB_PACKET_GET_SUB1(&(p)->hdr)
 #define AVB_PACKET_ACMP_GET_STATUS(p)			AVB_PACKET_GET_SUB2(&(p)->hdr)
-struct fsm_state_talker {
-    struct spa_list link;
 
-    uint64_t stream_id;
-    enum milan_acmp_talker_sta current_state;
-    int64_t timeout;
-};
+int avb_acmp_register_listener(struct server *server, struct stream *stream);
 
-struct fsm_binding_parameters {
-    uint32_t status;
-    uint64_t controller_entity_id;
-    uint64_t talker_entity_id;
-    uint64_t listener_entity_id;
-
-    uint16_t talker_unique_id;
-    uint16_t listener_unique_id;
-
-    uint16_t sequence_id;
-
-    uint64_t stream_id;
-    char stream_dest_mac[6];
-    uint8_t stream_vlan_id;
-};
-
-struct fsm_state_listener {
-    struct spa_list link;
-
-    struct fsm_binding_parameters binding_parameters;
-
-    enum milan_acmp_listener_sta current_state;
-    int64_t timeout;
-    uint16_t flags;
-    uint8_t probing_status;
-    uint16_t connection_count;
-    uint8_t STREAMING_WAIT;
-
-    // FIXME: Is it necessary? remove if not
-    uint8_t buf[2048];
-};
-
-struct avb_acmp *avb_acmp_register_listener(struct server *server,
-        struct fsm_state_listener *fsm_state_listener);
-
-struct avb_acmp *avb_acmp_register_talker(struct server *server,
-        struct fsm_state_talker *fsm_talker);
+int avb_acmp_register_talker(struct server *server, struct stream *stream);
 
 struct avb_acmp *avb_acmp_register(struct server *server);
 void avb_acmp_unregister(struct avb_acmp *acmp);

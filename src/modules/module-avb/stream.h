@@ -89,7 +89,8 @@ struct stream {
 	union {
 		struct fsm_state_talker acmp_state_talker;
 		struct fsm_state_listener acmp_state_listener;
-	}
+	};
+
 	struct avb_mvrp_attribute *vlan_attr;
 };
 

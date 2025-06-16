@@ -19,6 +19,14 @@
 
 static const uint8_t mac[6] = AVB_BROADCAST_MAC;
 
+enum fsm_type_stream {
+    FSM_STREAM_LISTENER = 0,
+    FSM_STREAM_TALKER,
+
+    FSM_MAX
+};
+#define STREAM_LISTENER_FSM 0
+#define STREAM_TALKER_FSM 1
 
 struct pending {
     struct spa_list link;
@@ -40,11 +48,49 @@ struct acmp {
 #define PENDING_CONTROLLER	2
     struct spa_list pending[3];
 
-#define STREAM_LISTENER_FSM 0
-#define STREAM_TALKER_FSM 1
     struct spa_list stream_fsm[2];
     uint16_t sequence_id[3];
 
+};
+
+struct fsm_state_talker {
+    struct spa_list link;
+
+    uint64_t stream_id;
+    enum milan_acmp_talker_sta current_state;
+    int64_t timeout;
+};
+
+struct fsm_binding_parameters {
+    uint32_t status;
+    uint64_t controller_entity_id;
+    uint64_t talker_entity_id;
+    uint64_t listener_entity_id;
+
+    uint16_t talker_unique_id;
+    uint16_t listener_unique_id;
+
+    uint16_t sequence_id;
+
+    uint64_t stream_id;
+    char stream_dest_mac[6];
+    uint8_t stream_vlan_id;
+};
+
+struct fsm_state_listener {
+    struct spa_list link;
+
+    struct fsm_binding_parameters binding_parameters;
+
+    enum milan_acmp_listener_sta current_state;
+    int64_t timeout;
+    uint16_t flags;
+    uint8_t probing_status;
+    uint16_t connection_count;
+    uint8_t STREAMING_WAIT;
+
+    // FIXME: Is it necessary? remove if not
+    uint8_t buf[2048];
 };
 
 static struct fsm_state_listener *acmp_fsm_find(struct acmp *acmp, int type, uint64_t id)
@@ -1537,47 +1583,65 @@ static const struct server_events server_events = {
     .command = acmp_command
 };
 
-int avb_acmp_register_listener(struct server *server,
-        struct fsm_state_listener *fsm_state_listener, uint64_t streamid)
+static int acmp_register_stream(struct server *server, struct stream *stream,
+    enum fsm_type_stream type)
 {
-    struct acmp *acmp;
-    // The es_builder should call this when a stream  input is created
-    fsm->probing_status = AVB_MILAN_ACMP_STATUS_PROBING_DISABLED;
-    spa_list_append(&acmp->stream_fsm[STREAM_LISTENER_FSM], &fsm->link);
+    struct spa_list *link;
+    struct acmp *acmp = server->acmp;
+    struct fsm_state_talker *acmp_fsm_talker;
+    struct fsm_state_listener *acmp_fsm_listener;
 
-    // Initialize the new FSM state
-    fsm->binding_parameters.stream_id = streamid;
-    fsm->current_state = MILAN_ACMP_LISTENER_STA_UNBOUND;
+    switch (type) {
+        case FSM_STREAM_LISTENER:
+            link = &fsm->link;
+            acmp_fsm_listener = &stream->acmp_state_listener;
 
-    //   Use to be this TODO: Is this the correct init status?
-    // p->probing_status = AVB_MILAN_ACMP_STATUS_PROBING_DISABLED;
+            // The es_builder should call this when a stream  input is created
+            acmp_fsm_listener->probing_status = AVB_MILAN_ACMP_STATUS_PROBING_DISABLED;
+            link = &acmp_fsm_listener->link;
 
-    fsm->timeout = LONG_MAX;
+            // Initialize the new FSM state // TODO use container of.
+            acmp_fsm_listener->binding_parameters.stream_id = stream->id;
+            // TODO
+            acmp_fsm_listener->current_state = MILAN_ACMP_LISTENER_STA_UNBOUND;
+            acmp_fsm_listener->timeout = LONG_MAX;
+
+
+        break;
+        case FSM_STREAM_TALKER:
+            acmp_fsm_talker = &stream->acmp_state_talker;
+
+            // The es_builder should call this when a stream  input is created
+            acmp_fsm_talker->probing_status = AVB_MILAN_ACMP_STATUS_PROBING_DISABLED;
+            link = &acmp_fsm_talker->link;
+
+            // Initialize the new FSM state // TODO use container of.
+            acmp_fsm_talker->timeout = LONG_MAX;
+        break;
+        default:
+            pw_log_error("Invalid valid\n");
+            spa_assert(0);
+        break;
+    }
+
+    spa_list_append(&acmp->stream_fsm[type], &fsm->link);
 
     return 0;
 }
 
-int avb_acmp_register_talker(struct server *server,
-        struct fsm_state_talker *fsm, uint64_t streamid)
+int avb_acmp_register_talker(struct server *server, struct stream *stream)
 {
-    struct acmp *acmp;
+    return acmp_register_stream(server, stream, FSM_STREAM_TALKER);
+}
 
-    // The es_builder should call this when a stream  input is created
-    fsm->probing_status = AVB_MILAN_ACMP_STATUS_PROBING_DISABLED;
-    spa_list_append(&acmp->stream_fsm[STREAM_TALKER_FSM], &fsm->link);
-
-    // Initialize the new FSM state
-    fsm->binding_parameters.stream_id = streamid;
-    fsm->current_state = MILAN_ACMP_LISTENER_STA_UNBOUND;
-    fsm->timeout = LONG_MAX;
-
-    return 0;
+int avb_acmp_register_listener(struct server *server, struct stream *stream)
+{
+    return acmp_register_stream(server, stream, FSM_STREAM_LISTENER);
 }
 
 struct avb_acmp *avb_acmp_register(struct server *server)
 {
     struct acmp *acmp;
-
     acmp = calloc(1, sizeof(*acmp));
     if (acmp == NULL)
         return NULL;
