@@ -20,6 +20,12 @@ int handle_cmd_lock_entity(struct aecp *aecp, int64_t now, const void *m, int le
 /**
  * @brief this is the unsolicted notificiation
  **/
-int handle_unsol_lock_entity(struct aecp *aecp, int64_t now);
+int handle_unsol_lock_entity(struct aecp *aecp, int64_t now, uint64_t ctrler_id);
+
+
+/**
+ * @brief The unsollicited timed out
+ */
+int handle_unsol_lock_entity_timeout(struct aecp *aecp, int64_t now)
 
 #endif //__AVB_AECP_AEM_LOCK_H__

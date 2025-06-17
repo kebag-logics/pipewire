@@ -35,7 +35,6 @@ int handle_cmd_set_clock_source(struct aecp *aecp, int64_t now, const void *m, i
     const struct avb_ethernet_header *h = m;
     const struct avb_packet_aecp_aem *p = SPA_PTROFF(h, sizeof(*h), void);
     struct avb_packet_aecp_aem_setget_clock_source *sclk_source;
-    struct aecp_aem_clock_domain_state clk_dmn_state = {0};
     /** Information in the packet */
     uint16_t desc_type;
     uint16_t desc_index;
@@ -58,40 +57,25 @@ int handle_cmd_set_clock_source(struct aecp *aecp, int64_t now, const void *m, i
     if (desc == NULL)
         return reply_status(aecp, AVB_AECP_AEM_STATUS_NO_SUCH_DESCRIPTOR, m, len);
 
-    rc = aecp_aem_get_state_var(aecp, aecp->server->entity_id, aecp_aem_clock_domain,
-        0, &clk_dmn_state);
-
-    if (rc)
-        spa_assert(0);
-
     dclk_domain = (struct avb_aem_desc_clock_domain *) desc->ptr;
     if (clock_src_index >= dclk_domain->clock_sources_count) {
         return reply_invalid_clock_source(aecp, dclk_domain, m, len);
     }
 
-    clk_dmn_state.base_desc.desc = desc;
-    dclk_domain->clock_source_index = clock_src_index;
-    // TODO Streams Media Clock AAF CRF notification change?
-
-    rc = aecp_aem_set_state_var(aecp, aecp->server->entity_id, ctrlr_id ,
-        aecp_aem_clock_domain, 0, &clk_dmn_state);
-
-    if (rc)
-        spa_assert(0);
+    dclk_domain->clock_source_index = htons(clock_src_index);
 
     return reply_success(aecp, m, len);
 }
 
-int handle_unsol_set_clock_source(struct aecp *aecp, int64_t now)
+int handle_unsol_set_clock_source(struct aecp *aecp, int64_t now, uint64_t ctrler_id)
 {
     uint8_t buf[128];
     struct descriptor *desc;
     struct avb_ethernet_header *h = (struct avb_ethernet_header *) buf;
     struct avb_packet_aecp_aem *p = SPA_PTROFF(h, sizeof(*h), void);
     struct avb_packet_aecp_aem_setget_clock_source *sclk_source;
-    struct aecp_aem_clock_domain_state clk_dmn_state = {0};
     struct avb_aem_desc_clock_domain* dclk_domain;
-
+    struct aecp_aem_base_info b_state = { 0 };
     uint64_t target_id = aecp->server->entity_id;
     size_t len;
     int rc;
@@ -99,17 +83,6 @@ int handle_unsol_set_clock_source(struct aecp *aecp, int64_t now)
     memset(buf, 0,  sizeof(buf));
     sclk_source = (struct avb_packet_aecp_aem_setget_clock_source *) p->payload;
 
-    rc = aecp_aem_get_state_var(aecp, target_id, aecp_aem_clock_domain, 0,
-            &clk_dmn_state);
-    if (rc)
-        spa_assert(0);
-
-    if (!clk_dmn_state.base_desc.base_info.needs_update) {
-        return 0;
-    }
-    clk_dmn_state.base_desc.base_info.needs_update = false;
-
-    desc = clk_dmn_state.base_desc.desc;
     dclk_domain = (struct avb_aem_desc_clock_domain*) desc->ptr;
     sclk_source->clock_source_index = htons(dclk_domain->clock_source_index);
     sclk_source->descriptor_id = htons(desc->index);
@@ -118,17 +91,9 @@ int handle_unsol_set_clock_source(struct aecp *aecp, int64_t now)
     AVB_PACKET_AEM_SET_COMMAND_TYPE(p, AVB_AECP_AEM_CMD_SET_CLOCK_SOURCE);
     len = sizeof(*p) + sizeof(*sclk_source) + sizeof(*h);
 
-    rc = reply_unsolicited_notifications(aecp, &clk_dmn_state.base_desc.base_info,
+    b_state.needs_update = true;
+    rc = reply_unsolicited_notifications(aecp, &b_state,
          buf, len, false);
-
-    if (rc)
-         spa_assert(0);
-
-    rc = aecp_aem_refresh_state_var(aecp, target_id, aecp_aem_clock_domain, 0,
-             &clk_dmn_state);
-
-    if (rc)
-        spa_assert(0);
 
     return 0;
 }

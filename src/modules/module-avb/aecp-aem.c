@@ -163,7 +163,9 @@ struct cmd_info {
 		 int len);
 	int (*handle_response) (struct aecp *aecp, int64_t now, const void *p,
 		 int len);
-	int (*handle_unsol) (struct aecp *aecp, int64_t now);
+	int (*handle_unsol) (struct aecp *aecp, int64_t now, uint64_t ctrler_id);
+
+	int (*handle_unsol_timer) (struct aecp *aecp, int64_t now);
 };
 
 #define AECP_AEM_HANDLE_CMD(cmd, readonly_desc, name_str, handle_exec)			\
@@ -356,7 +358,7 @@ static const struct cmd_info cmd_info[] = {
 
 };
 
-static inline const struct cmd_info *find_cmd_info(uint16_t type, const char *name)
+static inline CONTst struct cmd_info *find_cmd_info(uint16_t type, const char *name)
 {
 	if (type > (sizeof(cmd_info) / sizeof(cmd_info[0]))) {
 		pw_log_error("Invalid Command Type %u\n", type);
@@ -369,20 +371,20 @@ static inline const struct cmd_info *find_cmd_info(uint16_t type, const char *na
 static inline bool check_locked(struct aecp *aecp, int64_t now,
 	const struct avb_packet_aecp_aem *p, const struct cmd_info *cmd)
 {
+	struct descriptor *desc;
+	struct aecp_aem_entity_state *entity_state;
+	struct aecp_aem_lock_state *lock;
+
+	desc = server_find_descriptor(server, AVB_AEM_DESC_ENTITY, 0);
+	if (desc == NULL)
+		return reply_status(aecp, AVB_AECP_AEM_STATUS_NO_SUCH_DESCRIPTOR, p, len);
+
+	entity_state = desc->ptr;
+	lock = &entity_state->lock_state;
 	pw_log_info("Accessing %s, current entity is %s\n",
 		cmd->is_readonly? "ro" : "wo", "locked");
 
-	struct aecp_aem_lock_state lock = { 0 };
-	int rc = aecp_aem_get_state_var(aecp, htobe64(p->aecp.target_guid),
-								  aecp_aem_lock, 0, &lock);
-
-								  	// No lock was found for the entity, that is an error, return issue
-	if (rc) {
-		pw_log_error("Issue while retrieving lock\n");
-		spa_assert(0);
-	}
-
-	if (lock.base_info.expire_timeout < now) {
+	if (lock->base_info.expire_timeout < now) {
 		return false;
 	}
 
@@ -390,8 +392,8 @@ static inline bool check_locked(struct aecp *aecp, int64_t now,
 	 * Return lock if the lock is locked and the controller id is different
 	 * than the controller locking the entity
 	 */
-	return lock.is_locked &&
-			(lock.locked_id != htobe64(p->aecp.controller_guid));
+	return lock->is_locked &&
+			(lock->locked_id != htobe64(p->aecp.controller_guid));
 }
 
 int avb_aecp_aem_handle_command(struct aecp *aecp, const void *m, int len)
@@ -403,6 +405,7 @@ int avb_aecp_aem_handle_command(struct aecp *aecp, const void *m, int len)
 	const struct cmd_info *info;
 	struct timespec ts_now;
 	int64_t now;
+	uint64_t controller_id;
 
 	/**
 	 * Time is always using the monotonic time
@@ -427,7 +430,7 @@ int avb_aecp_aem_handle_command(struct aecp *aecp, const void *m, int len)
 		return info->handle_command(aecp, now, m, len);
 	} else {
 		/** If not locked then continue below */
-		if (!check_locked(aecp, now,p, &cmd_info[cmd_type])) {
+		if (!check_locked(aecp, now, p, &cmd_info[cmd_type])) {
 			rc = info->handle_command(aecp, now, m, len);
 			if (rc) {
 				pw_log_error("handling returned %d\n", rc);
@@ -435,7 +438,8 @@ int avb_aecp_aem_handle_command(struct aecp *aecp, const void *m, int len)
 			}
 
 			if (info->handle_unsol) {
-				rc = info->handle_unsol(aecp, now);
+				controller_id = htobe64(p->aecp.controller_guid)
+				rc = info->handle_unsol(aecp, now, controller_id);
 			}
 		} else {
 			rc = reply_locked(aecp, m, len);
@@ -452,7 +456,8 @@ int avb_aecp_aem_handle_timeouts(struct aecp *aecp, uint64_t now)
 		if (!cmd_info[index].handle_unsol) {
 			continue;
 		}
-		if ((cmd_info[index].handle_unsol(aecp, now))) {
+		// FIXME use a specific hand_unsol_timeout instead of this hack (0)
+		if ((cmd_info[index].handle_unsol(aecp, now, 0))) {
 			pw_log_error("unexpected failure in perdioc unsols %s\n",
 						  cmd_info[index].name);
 			spa_assert(0);

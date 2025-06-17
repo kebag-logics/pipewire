@@ -104,7 +104,7 @@ int handle_cmd_set_control(struct aecp *aecp, int64_t now, const void *m,
     return reply_success(aecp, m, len);
 }
 
-int handle_unsol_set_control(struct aecp *aecp, int64_t now)
+int handle_unsol_set_control(struct aecp *aecp, int64_t now, uint64_t ctrler_id)
 {
 	uint8_t buf[1024];
 	void *m = buf;

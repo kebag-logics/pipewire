@@ -57,7 +57,7 @@ static inline int reply_unsolicited_notifications(struct aecp *aecp,
 
 	// Loop through all the unsol entities.
 	// TODO a more generic way of craeteing this.
-	for (ctrler_index = 0; ctrler_index < 16; ctrler_index++) {
+	for (ctrler_index = 0; ctrler_index < AECP_AEM_MILAN_MAX_CONTROLLER; ctrler_index++) {
 		rc = aecp_aem_get_state_var(aecp, target_id, aecp_aem_unsol_notif,
 			ctrler_index, &unsol);
 

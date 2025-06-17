@@ -9,6 +9,6 @@
 #include "aecp-aem-cmd-resp-common.h"
 
 int handle_cmd_set_clock_source(struct aecp *aecp, int64_t now, const void *m, int len);
-int handle_unsol_set_clock_source(struct aecp *aecp, int64_t now);
+int handle_unsol_set_clock_source(struct aecp *aecp, int64_t now, uint64_t controller_id);
 
 #endif //__AVB_AECP_AEM_SET_CLOCK_SOURCE_H__

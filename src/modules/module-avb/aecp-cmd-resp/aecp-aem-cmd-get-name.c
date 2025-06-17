@@ -19,7 +19,6 @@ int handle_cmd_get_name(struct aecp *aecp, int64_t now, const void *m,
     int len)
 {
     uint8_t buf[256];
-    struct aecp_aem_name_state name_state = {0};
     struct server *server = aecp->server;
 	const struct avb_ethernet_header *h = m;
 	const struct avb_packet_aecp_aem *p = SPA_PTROFF(h, sizeof(*h), void);
@@ -58,12 +57,6 @@ int handle_cmd_get_name(struct aecp *aecp, int64_t now, const void *m,
     if (!list_support_descriptors_setget_name[desc_type]) {
             return reply_bad_arguments(aecp, m, len);
     }
-
-	rc = aecp_aem_get_state_var(aecp, htobe64(p->aecp.target_guid),
-		 	aecp_aem_name, desc_id, &name_state);
-	if (rc) {
-		spa_assert(0);
-	}
 
     len = len + sizeof(sg_name->name);
     memset(buf, 0, sizeof(buf));

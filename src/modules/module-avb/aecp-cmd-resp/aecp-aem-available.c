@@ -29,15 +29,24 @@ int handle_cmd_entity_available(struct aecp *aecp, int64_t now, const void *m, i
 	struct avb_packet_aecp_aem_available *avail_reply;
 
 	/* Entity specific */
-	struct aecp_aem_lock_state lock = {0};
-	int rc;
 	uint8_t buf[1024];
+	struct descriptor *desc;
+	struct aecp_aem_entity_state *entity_state;
+	struct aecp_aem_lock_state *lock;
+	int rc;
 
 #ifndef USE_MILAN
 // TODO get the acquire state
 #endif // USE_MILAN
 
+	desc = server_find_descriptor(server, AVB_AEM_DESC_ENTITY, 0);
+	if (desc == NULL)
+		return reply_status(aecp, AVB_AECP_AEM_STATUS_NO_SUCH_DESCRIPTOR, p, len);
+
+	entity_state = desc->ptr;
+	lock = &entity_state->lock_state;
 	/* Forge the response for the entity that is locking the device */
+
 	memcpy(buf, m, len);
 	h_reply = (struct avb_ethernet_header *) buf;
 	p_reply = SPA_PTROFF(h_reply, sizeof(*h_reply), void);
@@ -49,18 +58,18 @@ int handle_cmd_entity_available(struct aecp *aecp, int64_t now, const void *m, i
 // TODO
 #endif // USE_MILAN
 
-	rc = aecp_aem_get_state_var(aecp, p->aecp.target_guid, aecp_aem_lock, 0, &lock);
-	if (rc) {
-		pw_log_error("Isusue while getting lock\n");
-		spa_assert(0);
-	}
 
-	if ((lock.base_info.expire_timeout < now) || !lock.is_locked) {
+	if ((lock->base_info.expire_timeout < now) || !lock->is_locked) {
 		avail_reply->lock_controller_guid = 0;
 		avail_reply->flags = 0;
-	} else if (lock.is_locked) {
-		avail_reply->lock_controller_guid = htobe64(lock.locked_id);
+	} else if (lock->is_locked) {
+		avail_reply->lock_controller_guid = htobe64(lock->locked_id);
 		avail_reply->flags = htonl(AECP_AEM_AVAIL_ENTITY_LOCKED);
+	}
+
+	if (rc) {
+		pw_log_error("Issue while getting lock\n");
+		spa_assert(0);
 	}
 
 	AVB_PACKET_AECP_SET_MESSAGE_TYPE(&p_reply->aecp,

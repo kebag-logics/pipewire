@@ -94,10 +94,11 @@ struct aecp_aem_unsol_notification_state {
 
 #define AECP_AEM_MILAN_MAX_CONTROLLER 16
 struct aecp_aem_entity_state {
-    struct aecp_aem_lock_state  lock_state;
+    struct aecp_aem_lock_state lock_state;
     struct aecp_aem_unsol_notification_state unsol_notif_state[AECP_AEM_MILAN_MAX_CONTROLLER];
     struct avb_aem_desc_entity desc;
 };
+
 struct aecp_aem_configuration_state {
     struct aecp_aem_base_info base_info;
     uint16_t cfg_idx;
@@ -122,7 +123,8 @@ struct aecp_aem_desc {
 
 /** The control information to keep track of the latest changes */
 struct aecp_aem_control_state {
-    struct aecp_aem_desc_base base_desc;
+    struct aecp_aem_desc_base base;
+    struct avb_aem_desc_control desc;
 };
 
 /**
@@ -228,92 +230,5 @@ struct aecp_aem_stream_input_state {
     struct stream stream;
     struct avb_aem_desc_stream desc;
 };
-
-/**
- * The aecp_aem_desc_base inherites from the base
- */
-enum aecp_aem_lock_types {
-    aecp_aem_min = -1, // Sentinel check
-
-	aecp_aem_lock,
-    aecp_aem_name,
-    aecp_aem_clock_domain,
-    aecp_aem_configuration,
-    aecp_aem_control,
-    aecp_aem_stream_format,
-    aecp_aem_sampling_rate,
-    aecp_aem_counter_avb_interface,
-    aecp_aem_counter_clock_domain,
-    aecp_aem_counter_stream_input,
-    aecp_aem_counter_stream_output,
-    aecp_aem_unsol_notif,
-
-    // aecp_aem_desc, This is only used to retrieve the value, dynamic change
-    // are directly operated on the descriptor themselves.
-    // aecp_aem_conf, /** Keep track of the information
-    // aecp_aem_format,
-    // aecp_aem_stream_format,
-    // aecp_aem_stream_info,
-    // aecp_aem_name,
-    // aecp_aem_sampling_rate,
-    // aecp_aem_clock_source,
-    // aecp_aem_control,
-    // aecp_asem_streaming,
-    /** avb_info and as_path directly taken from running platform */
-    // aecp_aem_counters,
-    // aecp_aem_audio_map,
-    // aecp_dynamic_info,
-
-    aecp_aem_max  // Sentinel check
-};
-
-/**
- * @brief Creation of the aecm aem variable that keep track of the state of
- * specific variable in the AECP realm
- */
-// int aecp_aem_delete(struct aecp* aecp, uint64_t target_id,
-//     enum aecp_aem_lock_types type, size_t size);
-
-/**
- * @brief Delete variable from the aecp list
- */
-int aecp_aem_delete(struct aecp* aecp, uint64_t target_id,
-    enum aecp_aem_lock_types type, size_t size);
-
-/**
- * @brief Retrieve the variable holding the state of a specific information of
- *          the AECP states.
- * @return -1 if the var does not exists or if the type is not sypported yet.
- */
-int aecp_aem_get_state_var(struct aecp* aecp, uint64_t target_id,
-    enum aecp_aem_lock_types type, uint16_t id, void *state);
-
-/**
- * @brief this function will just refresh hte variable, not setting additional
- *      the metadata such as teh controoler Id that accessed it lastly and the
- *      needs_udpate value
- */
-int aecp_aem_refresh_state_var(struct aecp* aecp, uint64_t target_id,
-    enum aecp_aem_lock_types type, uint16_t id, void *state);
-
-/**
- * @brief retrieves the base information about a variable
- */
-int aecp_aem_get_base_info(struct aecp* aecp, uint64_t target_id,
-    enum aecp_aem_lock_types type, uint16_t id, struct aecp_aem_base_info **info);
-
-/**
- * @brief Retrieve the variable holding the state of a specific information of
- *          the AECP states.
- * @return 0 upon success, -1 if the variable or type are invalid.
- */
-int aecp_aem_set_state_var(struct aecp* aecp, uint64_t target_id,
-    uint64_t ctrler_id, enum aecp_aem_lock_types type, uint16_t id, void *state);
-
-/**
- * TODO
- */
-int aecp_aem_init_var_containers(struct aecp *aecp,
-        const struct aem_state_var_info *varsdesc, size_t array_size);
 
 #endif // AVB_AECP_AEM_STATE_H

@@ -102,7 +102,7 @@ int handle_cmd_set_configuration(struct aecp *aecp, int64_t now, const void *m, 
 #endif // USE_MILAN
 }
 
-int handle_unsol_set_configuration(struct aecp *aecp, int64_t now)
+int handle_unsol_set_configuration(struct aecp *aecp, int64_t now, uint64_t ctrler_id)
 {
 	struct aecp_aem_configuration_state cfg_state = {0};
 	/* Reply */

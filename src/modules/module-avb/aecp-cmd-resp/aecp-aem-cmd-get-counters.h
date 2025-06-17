@@ -11,7 +11,7 @@
 int handle_cmd_get_counters(struct aecp *aecp, int64_t now, const void *m,
     int len);
 
-int handle_unsol_get_counters(struct aecp *aecp, int64_t now);
+int handle_unsol_get_counters(struct aecp *aecp, int64_t now, uint64_t ctrler_id);
 
 
 #endif //__AECP_AEM_CMD_GET_COUNTERS_H__

@@ -64,7 +64,7 @@ int handle_cmd_set_stream_format(struct aecp *aecp, int64_t now, const void *m, 
     return reply_success(aecp, m, len);
 }
 
-int handle_unsol_set_stream_format(struct aecp *aecp, int64_t now)
+int handle_unsol_set_stream_format(struct aecp *aecp, int64_t now, uint64_t ctrler_id)
 {
     struct aecp_aem_stream_format_state sf_state = {0};
 	/* Reply */

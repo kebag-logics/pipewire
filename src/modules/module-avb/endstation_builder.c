@@ -50,7 +50,6 @@ static void *es_builder_desc_avb_interface(struct server *server, uint16_t type,
     // * FRAME TX
     // * FRAME  RX
     // * RX CRC ERROR
-
     struct aecp_aem_avb_interface_state avb_interface_state = { 0 };
     void *ptr_alloc;
 
@@ -85,7 +84,6 @@ static void *es_builder_desc_stream_output(struct server *server, uint16_t type,
     // Milan v1.2 Clause 5.3.7.7 Diagnostic conunters:
     // Stream start / Stream Stop / Media Reset / Timestamp_Uncertain
     // Frames TX
-
     struct aecp_aem_stream_output_state stream_output = { 0 };
     void *ptr_alloc;
 
@@ -110,7 +108,7 @@ static void *es_builder_desc_stream_output(struct server *server, uint16_t type,
     }
 
     if (avb_acmp_register_talker(server, &stream_output.stream)){
-        pw_log_error("Could not register the listener")
+        pw_log_error("Could not register the ACMP talker")
         spa_assert(0);
     }
 
@@ -189,7 +187,7 @@ static void *es_builder_desc_stream_input(struct server *server, uint16_t type,
         spa_assert(0);
     }
 
-    return ptr;
+    return ptr_alloc;
 }
 
 // Milan v1.2 5.3.9 STREAM_OUTPUT_PORT
@@ -202,7 +200,7 @@ static void *es_builder_desc_stream_port_output(struct server *server, uint16_t 
     pw_log_error("Not Implemented\n")
     spa_assert(0);
 
-    return -1;
+    return NULL;
 
 }
 
@@ -215,8 +213,7 @@ static void *es_builder_desc_stream_port_input(struct server *server, uint16_t t
     pw_log_error("Not Implemented\n")
     spa_assert(0);
 
-    return -1;
-
+    return NULL;
 }
 
 
@@ -228,17 +225,30 @@ static void *es_builder_desc_clock_domain(struct server *server, uint16_t type,
     // Milan V1.2 Clause 5.3.11.2 Diagnostic counters: Lock / Unlocked.
 
     // For now not used.
-}
-
-// Milan v1.2 5.3.12 Identify
-static void *es_builder_desc_identify(struct server *server, uint16_t type,
-            uint16_t index, size_t size, void *ptr)
-{
-    // For now not used.
     pw_log_error("Not Implemented\n")
     spa_assert(0);
 
-    return -1;
+    return NULL;
+}
+
+// Milan v1.2 5.3.12 Identify
+static void *es_builder_desc_control(struct server *server, uint16_t type,
+            uint16_t index, size_t size, void *ptr)
+{
+    struct aecp_aem_control_state control;
+    void *ptr_alloc;
+
+    // For now it only supports the IDENTIFY
+    memcpy(&control.desc, ptr, size);
+    ptr_alloc = server_add_descriptor(server, type, index, sizeof(control),
+                                       &control);
+
+    if (!ptr_alloc) {
+        pw_log_error("Error durring allocation\n");
+        spa_assert(0);
+    }
+
+    return ptr_alloc;
 }
 
 #define HELPER_ES_BUIDLER(type, callback) \
@@ -255,6 +265,8 @@ static struct es_bulder_st es_builder[AVB_AEM_DESC_MAX_17221] =
     HELPER_ES_BUIDLER(AVB_AEM_DESC_STREAM_OUTPUT, es_builder_desc_stream_output),
     HELPER_ES_BUIDLER(AVB_AEM_DESC_STREAM_INPUT, es_builder_desc_stream_input),
 
+    HELPER_ES_BUIDLER(AVB_AEM_DESC_CONTROL, es_builder_desc_control),
+
     // HELPER_ES_BUIDLER(AVB_AEM_DESC_STREAM_PORT_OUTPUT,
     //      es_builder_desc_stream_port_output),
 
@@ -263,7 +275,6 @@ static struct es_bulder_st es_builder[AVB_AEM_DESC_MAX_17221] =
 
 
     // HELPER_ES_BUIDLER(AVB_AEM_DESC_CLOCK_DOMAIN,es_builder_desc_clock_domain),
-    // HELPER_ES_BUIDLER(AVB_AEM_DESC_CONTROL, es_builder_desc_identify),
 };
 
 
