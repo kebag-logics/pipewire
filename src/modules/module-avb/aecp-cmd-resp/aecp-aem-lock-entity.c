@@ -138,6 +138,15 @@ static int handle_unsol_lock_common(struct aecp *aecp, int64_t now,
 	struct aecp_aem_lock_state *lock, bool internal)
 {
 	uint8_t buf[512];
+	void *m = buf;
+	// struct aecp_aem_regis_unsols
+	struct avb_ethernet_header *h = m;
+	struct avb_packet_aecp_aem *p = SPA_PTROFF(h, sizeof(*h), void);
+	struct avb_packet_aecp_aem_lock *ae;
+	size_t len = sizeof(*h) + sizeof(*p) + sizeof(*ae);
+
+	int rc;
+
 	// Freshen up the buffer
 	memset(buf, 0, sizeof(buf));
 	ae = (struct avb_packet_aecp_aem_lock*)p->payload;
@@ -153,6 +162,7 @@ static int handle_unsol_lock_common(struct aecp *aecp, int64_t now,
 	}
 
 	AVB_PACKET_AEM_SET_COMMAND_TYPE(p, AVB_AECP_AEM_CMD_LOCK_ENTITY);
+
 	/** Setup the packet for the unsolicited notification*/
 	rc = reply_unsolicited_notifications(aecp, &lock->base_info, buf, len, internal);
 	if (rc) {
@@ -160,21 +170,12 @@ static int handle_unsol_lock_common(struct aecp *aecp, int64_t now,
 	}
 
 	return rc;
-
 }
 
 int handle_unsol_lock_entity(struct aecp *aecp, int64_t now, uint64_t ctrler_id)
 {
 	bool has_expired;
 	int rc;
-	void *m = buf;
-
-	// struct aecp_aem_regis_unsols
-	struct avb_ethernet_header *h = m;
-	struct avb_packet_aecp_aem *p = SPA_PTROFF(h, sizeof(*h), void);
-	struct avb_packet_aecp_aem_lock *ae;
-	size_t len = sizeof(*h) + sizeof(*p) + sizeof(*ae);
-	uint64_t target_id = aecp->server->entity_id;
 
 	struct descriptor *desc;
 	struct aecp_aem_entity_state *entity_state;
@@ -200,16 +201,8 @@ int handle_unsol_lock_entity(struct aecp *aecp, int64_t now, uint64_t ctrler_id)
 
 int handle_unsol_lock_entity_timeout(struct aecp *aecp, int64_t now)
 {
-	uint8_t buf[512];
 	bool has_expired;
 	int rc;
-	void *m = buf;
-	// struct aecp_aem_regis_unsols
-	struct avb_ethernet_header *h = m;
-	struct avb_packet_aecp_aem *p = SPA_PTROFF(h, sizeof(*h), void);
-	struct avb_packet_aecp_aem_lock *ae;
-	size_t len = sizeof (*h) + sizeof(*p) + sizeof(*ae);
-	uint64_t target_id = aecp->server->entity_id;
 
 	struct descriptor *desc;
 	struct aecp_aem_entity_state *entity_state;
